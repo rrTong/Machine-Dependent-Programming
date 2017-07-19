@@ -1,0 +1,48 @@
+	.EQU	@,$0DB
+	lda	fuSec
+	ada	sec
+	ada	elSec
+	sta	fuSec
+	lda	fuSec
+	cma#	000060
+	jlt	minMath
+	lda	fuMin
+	ada#	000001
+	sta	fuMin
+	lda	fuSec
+	sba#	000060
+	sta	fuSec
+minMath:	lda	fuMin
+	ada	min
+	ada	elMin
+	sta	fuMin
+	lda	fuMin
+	cma#	000060
+	jlt	hrMath
+	lda	fuHr
+	ada#	000001
+	sta	fuHr
+	lda	fuMin
+	sba#	000060
+	sta	fuMin
+hrMath:	lda	fuHr
+	ada	hr
+	ada	elHr
+	sta	fuHr
+	lda	fuHr
+	cma#	000024
+	jlt	end
+	lda	fuHr
+	sba#	000024
+	sta	fuHr
+end:	hlt
+hr:	.WORD	000017 ; $025
+min:	.WORD	000034 ; $026
+sec:	.WORD	000056 ; $027
+elHr:	.WORD	000009 ; $028
+elMin:	.WORD	000048 ; $029
+elSec:	.WORD	000017 ; $02A
+fuHr:	.WORD	000000 ; $02B
+fuMin:	.WORD	000000 ; $02C
+fuSec:	.WORD	000000 ; $02D
+	.end

@@ -1,0 +1,61 @@
+; main
+	.equ	@, $000
+	.equ	row, 3
+	.equ	col, 2
+	.equ	size, row*col
+	.equ	stack, $300
+
+	lds#	stack		;sp decreases when you psh, sp inc when you pop
+	ldf#	0
+
+
+	psh	givenArray		; make room for stack
+	psh#	row
+	psh#	col
+	psh	resultArray
+
+	jsr	outerLoop
+
+	ads#	4		; 4 parameters in stack, clearing
+
+	hlt
+
+	.equ	@, $100
+givenArray:	.word	1		
+	.word	2		
+	.word	3		
+	.word	4
+	.word	5
+	.word	6
+
+resultArray:	.blkw size, 0		; $106 - $10B
+
+givenIndex:	.word	0
+resultIndex:	.word	0
+timesLooped:	.word	0
+
+outerLoop:	lda	timesLooped		; move position of index to count next col
+	cma#	col-1
+	jgt	exit
+
+	ldx	timesLooped
+	sta	givenIndex
+
+innerLoop:	ldx	givenIndex		
+	lda+	givenArray		; loads position of given array
+	ldx	resultIndex
+	sta+	resultArray		; moves values of given array into new array
+
+	lda# !	2		; puts row-major value into stack
+	ada	givenIndex		
+	sta	givenIndex		; moves through given array
+	
+	inc	resultIndex		; points to the right position in new array
+
+	cma#	size		; if column is transferred, move to next col		
+	jlt	innerLoop		; otherwise stay in innerLoop
+
+	inc	timesLooped		; track how many times outerLoop has looped
+	jmp	outerLoop
+	
+exit:	rtn

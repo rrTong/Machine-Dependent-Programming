@@ -1,0 +1,14 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ; pretend.csp
+  2.              
+  3.              	.equ	@,$000
+  4.              	.equ	input,$10D	; calling memory loc input
+  5.              	.equ	sos,$100	; create name
+  6.  000 000006  	lda#	6
+  7.  001 04210D  	sta	input	; storing 6 into location named input
+  8.  002 402100  	jmp	sos	; get it into loc
+  9.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+00010D = INPUT           000100 = SOS             

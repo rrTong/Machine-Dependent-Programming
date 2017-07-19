@@ -1,0 +1,52 @@
+	.equ	@,$000
+	.equ	N, 6
+
+loop:	jmp	check	; while (! (right < left))
+check_end:	lda	left	;mid = (left + right) / 2
+	ada	right
+	div#	2
+	sta	mid
+
+	ldx	mid
+	lda+	sorted
+	cma	target
+	jeq	found
+	jgt	top
+	jlt	bottom
+
+found:	lda#	1	; ACC = 1
+	jmp	end
+
+not_found:	lda#	0
+	jmp	end
+
+top:	lda	mid	; right = mid - 1
+	sba#	1
+	sta	right
+	jmp	loop
+
+bottom:	lda	mid
+	ada#	1
+	sta	left
+	jmp	loop
+
+check:	lda	right
+	cma	left
+	jlt	not_found
+	jmp	check_end
+
+end:	hlt
+left:	.word	0
+right:	.word	N - 1
+mid:	.word	0
+target:	.word	109	; "user input"
+	.equ	@,$100
+intValue:	.word	0
+arraySize:	.word	N
+sorted:	.word	-345	; $102
+	.word	-98	
+	.word	109
+	.word	1555
+	.word	6332
+	.word	33194	; $107
+	.end

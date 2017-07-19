@@ -1,0 +1,84 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@,$000
+  2.              	.equ	N, 6
+  3.              
+  4.  000 01202D  loop:	ldx	i
+  5.  001 FFF003  	txa
+  6.  002 042030  	sta	min
+  7.              
+  8.  003 01202D  	ldx	i	;j = i + 1
+  9.  004 110001  	adx#	1
+ 10.  005 05202E  	stx	j
+ 11.              
+ 12.  006 00202E  loop2:	lda	j	;j < arraySize
+ 13.  007 202100  	cma	arraySize
+ 14.  008 4B201F  	jge	swap
+ 15.              
+ 16.  009 01202E  	ldx	j
+ 17.  00A 004101  	lda+	array	;if loop
+ 18.  00B 042031  	sta	currCompare
+ 19.              	
+ 20.  00C 012030  	ldx	min	
+ 21.  00D 004101  	lda+	array
+ 22.  00E 202031  	cma	currCompare
+ 23.  00F 4A201B  	jlt	incJ
+ 24.              
+ 25.  010 00202E  	lda	j	;min = j
+ 26.  011 042030  	sta	min
+ 27.              
+ 28.  012 100001  	ada#	1	;j++
+ 29.  013 04202E  	sta	j
+ 30.  014 402006  	jmp	loop2
+ 31.              
+ 32.  015 00202D  incI:	lda	i
+ 33.  016 202100  	cma	arraySize
+ 34.  017 4B202C  	jge	end
+ 35.  018 100001  	ada#	1
+ 36.  019 04202D  	sta	i
+ 37.  01A 402000  	jmp	loop
+ 38.              
+ 39.  01B 00202E  incJ:	lda	j
+ 40.  01C 100001  	ada#	1
+ 41.  01D 04202E  	sta	j
+ 42.  01E 402006  	jmp	loop2
+ 43.              
+ 44.  01F 01202D  swap:	ldx	i
+ 45.  020 004101  	lda+	array
+ 46.  021 04202F  	sta	temp
+ 47.              
+ 48.  022 012030  	ldx	min
+ 49.  023 004101  	lda+	array
+ 50.  024 042032  	sta	swapMin
+ 51.  025 01202D  	ldx	i
+ 52.  026 002032  	lda	swapMin
+ 53.  027 044101  	sta+	array
+ 54.              
+ 55.  028 00202F  	lda	temp
+ 56.  029 012030  	ldx	min
+ 57.  02A 044101  	sta+	array
+ 58.  02B 402015  	jmp	incI
+ 59.              
+ 60.  02C FFFFFF  end:	hlt
+ 61.  02D 000000  i:	.word	0	; $029
+ 62.  02E 000000  j:	.word	0	;i + 1
+ 63.  02F 000000  temp:	.word	0
+ 64.  030 000000  min:	.word	0
+ 65.  031 000000  currCompare:	.word	0
+ 66.  032 000000  swapMin:	.word	0	;
+ 67.              	.equ	@,$100
+ 68.  100 000006  arraySize:	.word	N
+ 69.  101 000064  array:	.word	100	; $101
+ 70.  102 00004A  	.word	74
+ 71.  103 FFFF70  	.word	-144
+ 72.  104 002726  	.word	10022
+ 73.  105 000291  	.word	657
+ 74.  106 FFFFDF  	.word	-33
+ 75.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000101 = ARRAY           000100 = ARRAYSIZE       000031 = CURRCOMPARE     
+00002C = END             00002D = I               000015 = INCI            
+00001B = INCJ            00002E = J               000000 = LOOP            
+000006 = LOOP2           000030 = MIN             000006 = N               
+00001F = SWAP            000032 = SWAPMIN         00002F = TEMP            

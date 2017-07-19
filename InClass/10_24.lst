@@ -1,0 +1,43 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	num_of_rows, 4
+  2.              	.equ	num_of_cols, 3
+  3.              	.equ	max_row, num_of_rows - 1
+  4.              	.equ	max_col, num_of_cols - 1
+  5.              
+  6.  000 002013  rloop:	lda	curr_row
+  7.  001 200003  	cma#	max_row
+  8.  002 4D2012  	jgt	rloop_end
+  9.              
+ 10.  003 002014  cloop:	lda	curr_col
+ 11.  004 200002  	cma#	max_col
+ 12.  005 4D200F  	jgt	cloop_end
+ 13.              
+ 14.  006 002013  	lda	curr_row
+ 15.  007 180003  	mul#	num_of_cols
+ 16.  008 102014  	ada	curr_col
+ 17.  009 FFF000  	tax	
+ 18.              
+ 19.  00A 002013  	lda	curr_row
+ 20.  00B 182014  	mul	curr_col
+ 21.  00C 044015  	sta+	table
+ 22.              
+ 23.  00D 1B2014  	inc	curr_col
+ 24.  00E 402003  	jmp	cloop
+ 25.              
+ 26.  00F 1B2013  cloop_end:	inc	curr_row
+ 27.  010 0A2014  	clr	curr_col
+ 28.  011 402000  	jmp	rloop
+ 29.              
+ 30.  012 FFFFFF  rloop_end:	hlt
+ 31.              
+ 32.  013 000000  curr_row:	.word	0
+ 33.  014 000000  curr_col:	.word	0
+ 34.  015 FFFFFF  table:	.blkw	num_of_rows * num_of_cols, -1
+ 35.              
+
+                     SYMBOL TABLE CONTENTS
+
+000003 = CLOOP           00000F = CLOOP_END       000014 = CURR_COL        
+000013 = CURR_ROW        000002 = MAX_COL         000003 = MAX_ROW         
+000003 = NUM_OF_COLS     000004 = NUM_OF_ROWS     000000 = RLOOP           
+000012 = RLOOP_END       000015 = TABLE           

@@ -1,0 +1,16 @@
+;we need to
+
+initialize the timer
+
+the timer will count
+
+it will loop the counter ten times
+(because timer only holds ~1 second)
+
+after it loops 10 times, you want to 
+
+print the screen
+
+timer_isr to reset the timer
+
+;we need a flag

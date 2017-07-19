@@ -1,0 +1,13 @@
+	.equ	@,$000
+	lda#	$00B
+	psh#	1
+	psh#	2
+	psh#	3
+	psh#	4
+	psh#	5
+	psh#	6
+	popa
+	popa
+	popa
+	hlt
+	.end

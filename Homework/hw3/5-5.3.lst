@@ -1,0 +1,16 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.  000 010000  	ldx#	0
+  2.  001 002100  	lda	X
+  3.  002 110001  loop:	adx#	1
+  4.  003 210009  	cmx#	9
+  5.  004 4D2007  	jgt	end
+  6.  005 182100  	mul	X
+  7.  006 402002  	jmp	loop
+  8.  007 FFFFFF  end:	hlt
+  9.              	.equ	@,$100
+ 10.  100 000002  X:	.blkw	10, 2
+ 11.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000007 = END             000002 = LOOP            000100 = X               

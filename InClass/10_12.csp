@@ -1,0 +1,18 @@
+; sos.csp
+;              .equ @,$100
+              .equ max_int, 5
+              lda  counter
+loop:         cma# max_int
+              jgt  end
+              mul  counter
+              ada  sum
+              sta  sum
+              lda  counter
+              ada# $001
+              sta  counter
+              jmp  loop
+end:          hlt
+counter:      .word $001
+sum:          .word $000
+n:            .word max_int
+              .end

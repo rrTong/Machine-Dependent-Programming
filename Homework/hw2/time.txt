@@ -1,0 +1,26 @@
+int time()
+{
+    int hr, min, sec;
+    int elHr, elMin, elSec;
+    int fuHr, fuMin, fuSec;
+
+    fuSec = sec + elSec;
+    if (fuSec > 59)
+    {
+        elMin++;
+        fuSec = fuSec - 60;
+    }
+
+    fuMin = min + elMin;
+    if (fuMin > 59)
+    {
+        elHr++;
+        fuMin = fuMin - 60;
+    }
+
+    fuHr = hr + elHr;
+    if (fuHr > 23)
+    {
+        fuHr = fuHr - 24;
+    }
+}

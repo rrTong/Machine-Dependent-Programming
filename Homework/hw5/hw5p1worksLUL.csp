@@ -1,0 +1,68 @@
+	.equ	@, $000
+	.equ	stack, $200
+	.equ	size, 27
+	lds#	stack
+	ldf#	0
+
+	psh#	string
+	psh#	size
+	psh#	newString
+
+	jsr	swapcase
+
+	ads#	3
+
+	hlt
+
+	.equ	@, $020
+	.equ	string1, 4
+	.equ	size1, 3
+	.equ	newString1, 2
+
+swapcase:	pshf
+	tsf
+	psha
+	pshx
+	ldx#	0
+
+loop:	ldc* !	string1		; loads string
+
+	cma#	'A'		; checks if upperCase
+	jlt	next
+	cma#	'Z'		
+	jle	upperToLower
+
+	cma#	'a'		; checks if lowerCase
+	jlt	next
+	cma#	'z'		; if > z, not a letter
+	jlt	lowerToUpper
+
+	jmp	next
+
+lowerToUpper:	sba#	$20		; lowerCase ==> upperCase
+	jmp	next
+
+upperToLower:	ada# 	$20		; upperCase ==> lowerCase
+
+next:	stc* !	newString1
+	aoc !	size1		; moves to next character
+	jlt	loop
+	
+	popx
+	popa
+	popf
+	rtn
+
+	.equ	@, $100
+string:	.word	$6C4541
+	.word	$724E20
+	.word	$705974
+	.word	$484F6E
+	.word	$20694E
+	.word	$203330
+	.word	$205965
+	.word	$615253
+	.word	$212020
+
+newString:	.blkw 9		; newString starts on $109
+	.end

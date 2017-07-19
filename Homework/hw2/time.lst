@@ -1,0 +1,56 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.EQU	@,$0DB
+  2.  0DB 002108  	lda	fuSec
+  3.  0DC 102102  	ada	sec
+  4.  0DD 102105  	ada	elSec
+  5.  0DE 042108  	sta	fuSec
+  6.  0DF 002108  	lda	fuSec
+  7.  0E0 20003C  	cma#	000060
+  8.  0E1 4A20E8  	jlt	minMath
+  9.  0E2 002107  	lda	fuMin
+ 10.  0E3 100001  	ada#	000001
+ 11.  0E4 042107  	sta	fuMin
+ 12.  0E5 002108  	lda	fuSec
+ 13.  0E6 14003C  	sba#	000060
+ 14.  0E7 042108  	sta	fuSec
+ 15.  0E8 002107  minMath:	lda	fuMin
+ 16.  0E9 102101  	ada	min
+ 17.  0EA 102104  	ada	elMin
+ 18.  0EB 042107  	sta	fuMin
+ 19.  0EC 002107  	lda	fuMin
+ 20.  0ED 20003C  	cma#	000060
+ 21.  0EE 4A20F5  	jlt	hrMath
+ 22.  0EF 002106  	lda	fuHr
+ 23.  0F0 100001  	ada#	000001
+ 24.  0F1 042106  	sta	fuHr
+ 25.  0F2 002107  	lda	fuMin
+ 26.  0F3 14003C  	sba#	000060
+ 27.  0F4 042107  	sta	fuMin
+ 28.  0F5 002106  hrMath:	lda	fuHr
+ 29.  0F6 102100  	ada	hr
+ 30.  0F7 102103  	ada	elHr
+ 31.  0F8 042106  	sta	fuHr
+ 32.  0F9 002106  	lda	fuHr
+ 33.  0FA 200018  	cma#	000024
+ 34.  0FB 4A20FF  	jlt	end
+ 35.  0FC 002106  	lda	fuHr
+ 36.  0FD 140018  	sba#	000024
+ 37.  0FE 042106  	sta	fuHr
+ 38.  0FF FFFFFF  end:	hlt
+ 39.  100 000011  hr:	.WORD	000017 ; $025
+ 40.  101 000022  min:	.WORD	000034 ; $026
+ 41.  102 000038  sec:	.WORD	000056 ; $027
+ 42.  103 000009  elHr:	.WORD	000009 ; $028
+ 43.  104 000030  elMin:	.WORD	000048 ; $029
+ 44.  105 000011  elSec:	.WORD	000017 ; $02A
+ 45.  106 000000  fuHr:	.WORD	000000 ; $02B
+ 46.  107 000000  fuMin:	.WORD	000000 ; $02C
+ 47.  108 000000  fuSec:	.WORD	000000 ; $02D
+ 48.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000103 = ELHR            000104 = ELMIN           000105 = ELSEC           
+0000FF = END             000106 = FUHR            000107 = FUMIN           
+000108 = FUSEC           000100 = HR              0000F5 = HRMATH          
+000101 = MIN             0000E8 = MINMATH         000102 = SEC             

@@ -1,0 +1,39 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@,$000
+  2.              	.equ	arr,$100
+  3.              	.equ	n, 5
+  4.              
+  5.  000 002010  	lda	base
+  6.  001 182012  	mul	neg_1
+  7.  002 042011  	sta	neg_base
+  8.  003 002012  	lda	neg_1
+  9.  004 042013  	sta	big
+ 10.  005 012010  	ldx	base
+ 11.  006 112011  	adx	neg_base
+ 12.  007 210005  loop:	cmx#	n
+ 13.  008 4B200F  	jge	done
+ 14.  009 004100  	lda+	a
+ 15.  00A 202013  	cma	big
+ 16.  00B 4C200D  	jle	endif
+ 17.  00C 042013  	sta	big
+ 18.  00D 110001  endif:	adx#	1
+ 19.  00E 402007  	jmp	loop
+ 20.  00F FFFFFF  done:	hlt
+ 21.  010 FFFFFE  base:	.word	-2
+ 22.  011 000000  neg_base:	.word	0
+ 23.  012 FFFFFF  neg_1:	.word	-1
+ 24.  013 000000  big:	.word	0	;$013
+ 25.              	.equ	@,arr
+ 26.  100 000011  a:	.word	17
+ 27.  101 000005  	.word	5
+ 28.  102 0005B9  	.word	1465
+ 29.  103 0002B1  	.word	689
+ 30.  104 000039  	.word	57
+ 31.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000100 = A               000100 = ARR             000010 = BASE            
+000013 = BIG             00000F = DONE            00000D = ENDIF           
+000007 = LOOP            000005 = N               000012 = NEG_1           
+000011 = NEG_BASE        

@@ -1,0 +1,46 @@
+	.EQU	@,$0000D7
+	lda	n
+if:	cma#	$000000
+	jlt	if2
+	jmp	loop3
+if2:	lda	m
+	cma#	$000000
+	jlt	loop
+	jmp	loop2
+loop:	lda	nCounter
+	cma	n
+	jlt	end
+	lda	p
+	sba	m
+	sta	p
+	lda	nCounter
+	sba#	$000001
+	sta	nCounter
+	jmp	loop
+loop2:	lda	nCounter
+	cma	n
+	jlt	end
+	lda	p
+	sba	m
+	sta	p
+	lda	nCounter
+	sba#	$000001
+	sta	nCounter
+	jmp	loop2
+loop3:	lda	counter
+	cma	n
+	jgt	end
+	lda	p
+	ada	m
+	sta	p
+	lda	counter
+	ada#	$000001
+	sta	counter
+	jmp	loop3
+end:	hlt
+counter:	.WORD $000001
+nCounter:	.WORD $FFFFFF
+m:	.WORD $000003 ; $029
+n:	.WORD $000002 ; $02A
+p:	.WORD $000000 ; $02B
+	.end

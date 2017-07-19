@@ -1,0 +1,32 @@
+int multByAdd(int m, int n)
+{
+    int p = 0;
+    int count;
+
+    if ( n < 0 ) 
+    {
+        if ( m < 0 ) //if m and n negative
+        {
+            for (count = 0; count > n; count--) //loop
+            {
+                p = p - m;
+            }
+        }
+        else //if n negative but not m
+        {
+            for (count = 0; count > n; count--) //loop2
+            {
+                p = p + m;
+            }
+        }
+
+    }
+    else //if n is > 0 or is 0
+    {
+        for (count = 0; count < n; count++) //loop3
+        {
+            p = p + m;
+        }
+    }
+    return p;
+}

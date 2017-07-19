@@ -1,0 +1,6 @@
+	LDA	$000
+	ADA	$005
+	STA	$003
+	ADA#	$05C
+	HLT
+	.WORD	$000002

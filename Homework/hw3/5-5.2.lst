@@ -1,0 +1,17 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.  000 012007  	ldx	Xsize
+  2.  001 002100  	lda	X
+  3.  002 612004  loop:	soj	loop2
+  4.  003 402006  	jmp	end
+  5.  004 182100  loop2:	mul	X
+  6.  005 402002  	jmp	loop
+  7.  006 FFFFFF  end:	hlt
+  8.  007 000009  Xsize:	.word	9
+  9.              	.equ	@,$100
+ 10.  100 000002  X:	.blkw	10, 2
+ 11.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000006 = END             000002 = LOOP            000004 = LOOP2           
+000100 = X               000007 = XSIZE           

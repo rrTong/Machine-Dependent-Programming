@@ -1,0 +1,11 @@
+	ldx#	0
+	lda	X
+loop:	adx#	1
+	cmx#	9
+	jgt	end
+	mul	X
+	jmp	loop
+end:	hlt
+	.equ	@,$100
+X:	.blkw	10, 2
+	.end

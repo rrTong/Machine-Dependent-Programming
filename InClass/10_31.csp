@@ -1,0 +1,13 @@
+	.equ	third, 0
+	.equ	second, 1
+	.equ	first, 2
+	.equ	stackstart, $020
+	lda	stackstart
+	psh#	100
+	psh#	200
+	psh#	300
+	tsf		; transfer to frame
+	lda !	first	; order here doesnt matter
+	lda !	third	; just as long as the column has all the needed values
+	lda !	second
+	hlt

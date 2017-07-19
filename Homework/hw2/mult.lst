@@ -1,0 +1,54 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.EQU	@,$0000D7
+  2.  0D7 002101  	lda	n
+  3.  0D8 200000  if:	cma#	$000000
+  4.  0D9 4A20DB  	jlt	if2
+  5.  0DA 4020F3  	jmp	loop3
+  6.  0DB 002100  if2:	lda	m
+  7.  0DC 200000  	cma#	$000000
+  8.  0DD 4A20DF  	jlt	loop
+  9.  0DE 4020E9  	jmp	loop2
+ 10.  0DF 0020FF  loop:	lda	nCounter
+ 11.  0E0 202101  	cma	n
+ 12.  0E1 4A20FD  	jlt	end
+ 13.  0E2 002102  	lda	p
+ 14.  0E3 142100  	sba	m
+ 15.  0E4 042102  	sta	p
+ 16.  0E5 0020FF  	lda	nCounter
+ 17.  0E6 140001  	sba#	$000001
+ 18.  0E7 0420FF  	sta	nCounter
+ 19.  0E8 4020DF  	jmp	loop
+ 20.  0E9 0020FF  loop2:	lda	nCounter
+ 21.  0EA 202101  	cma	n
+ 22.  0EB 4A20FD  	jlt	end
+ 23.  0EC 002102  	lda	p
+ 24.  0ED 142100  	sba	m
+ 25.  0EE 042102  	sta	p
+ 26.  0EF 0020FF  	lda	nCounter
+ 27.  0F0 140001  	sba#	$000001
+ 28.  0F1 0420FF  	sta	nCounter
+ 29.  0F2 4020E9  	jmp	loop2
+ 30.  0F3 0020FE  loop3:	lda	counter
+ 31.  0F4 202101  	cma	n
+ 32.  0F5 4D20FD  	jgt	end
+ 33.  0F6 002102  	lda	p
+ 34.  0F7 102100  	ada	m
+ 35.  0F8 042102  	sta	p
+ 36.  0F9 0020FE  	lda	counter
+ 37.  0FA 100001  	ada#	$000001
+ 38.  0FB 0420FE  	sta	counter
+ 39.  0FC 4020F3  	jmp	loop3
+ 40.  0FD FFFFFF  end:	hlt
+ 41.  0FE 000001  counter:	.WORD $000001
+ 42.  0FF FFFFFF  nCounter:	.WORD $FFFFFF
+ 43.  100 000003  m:	.WORD $000003 ; $029
+ 44.  101 000002  n:	.WORD $000002 ; $02A
+ 45.  102 000000  p:	.WORD $000000 ; $02B
+ 46.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+0000FE = COUNTER         0000FD = END             0000D8 = IF              
+0000DB = IF2             0000DF = LOOP            0000E9 = LOOP2           
+0000F3 = LOOP3           000100 = M               000101 = N               
+0000FF = NCOUNTER        000102 = P               

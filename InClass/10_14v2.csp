@@ -1,0 +1,9 @@
+; pretend.csp
+
+	.equ	@,$000
+	.equ	input,$10D	; calling memory loc input
+	.equ	sos,$100	; create name
+	lda#	6
+	sta	input	; storing 6 into location named input
+	jmp	sos	; get it into loc
+	.end

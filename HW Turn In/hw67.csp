@@ -1,0 +1,506 @@
+; Homework Assignment 6 and 7
+; NAME: Calvin Huang 999776364, Ryan Tong 912327046
+; NOTE: Everything works except for Timer and Interrupt
+;       (interrupt only outputs '!')
+	.equ	@, $000	; start at addr 0
+	.equ	stack, $200	; start stack at $200, stack is before $400
+
+; timer
+	.equ	crt_data, $317	; outputs ACC to cursor
+	.equ	tim_ctrl, $030	; 0011 0000 start timer, w/o load counter
+	.equ	tim_stat, $030	
+	.equ	tim_valu, $031	
+
+	.equ	reset_ready_bit, $40	; 0100 0000 clear ready bit
+	.equ	start_after_load, $10	; 0001 0000 start timer, after load count
+
+	.equ	enable_ints, $80	; 1000 0000 enable interrupts
+	.equ	kbd_ctrl, $000	; interprets bits 
+	.equ	kbd_data, $001	; removes char from buffer
+; miniOS
+	.equ	get_num, $E01	; takes user integer and puts in acc
+	.equ	put_num, $E00	; takes ACC and prints integer
+	.equ	put_str, $E05	; prints str, needs len
+	.equ	put_nl, $E06	; prints next line
+
+	.equ	CLEAR_SCREEN, $01	; clears the screen, never used
+
+	.equ	CRT_WIDTH, 38	; width of program
+
+	.equ	enable_and_reset, $C0	; enables timer interrupts, resets ready bit
+	.equ	enable_reset_and_start, $D0 ; above and starts timer after loading counter	
+
+	.equ	stacktop, $E00	; the top of this stack
+
+;	.equ	stackstart, $B00
+	.equ	ex_point, $21	; holds ASCII value for !
+; main program
+	lds#	stack	; start sp at $200
+	ldf#	0	; start fp at 0
+
+	lda#	kbd_int	; load keyboard isr
+	sta	$FF8	; store kbd_int into keyboard int addr
+
+;	lds#	stackstart	
+	lda#	enable_ints	; enable interrupts 
+	outb	kbd_ctrl	; interprets bits
+
+mainLoop:
+;	inb	tim_stat
+;	jge	timeLoop
+
+;	lda#	reset_ready_bit
+;	outb	tim_ctrl
+;	lda#	$20
+;	outb	crt_data
+
+	psh#	prompt_len	; push length of string
+	psh#	prompt	; push contents of string
+	jsr	put_str	; prints "How many generations..."
+	ads#	2	; clean up
+
+	jsr	get_num	; places userInput integer into ACC
+	sta	numOfGens	; store userInput into number of generations
+
+	lda	numOfGens	; load userInput
+	cma#	0	; check if userInput is 0
+	jeq	endOfProg	; if it is, jump to end of program
+
+genLoop:	lda	genCount	; current generation
+	cma	numOfGens	; check if current generation > userInput
+	jgt	mainEnd	; if it is, restart main, start prompt
+
+	cma#	1	; if you printed gen 0 before
+	jge	promptLoop	; dont need this new line anymore
+	jsr	put_nl	; new line only after prompt
+
+promptLoop:	psh#	genPrompt_len	; push length of string
+	psh#	genPrompt	; push contents of string
+	jsr	put_str	; prints "Generation:  "
+	ads#	2	; clean up
+
+	lda	totalGenCount	; cumulative count of gens (for multiple runs)
+	jsr	put_num	; prints "#", whichever generation # we are at
+
+	cma#	1	; gen1 is in array2 of prior calculation
+	jeq	pause	; skip calculation until gen 2
+
+x:	psh#	$600	; push starting addr of grid
+	psh#	6	; push num of rows
+	psh#	7	; push num of cols
+	psh#	$700	; push starting addr of newGrid	
+	jsr	nextGen	; go to nextGen, which calculate one gen
+			 
+	ads#	4	; clean up
+
+skipNextGen:	lda#	0	; load value 0 to
+	sta	pauseCounter	; reset pauseCounter
+
+;	lds#	stacktop
+;	lda	reloadR
+;	sta	reload
+;	lda	reload
+;	outw	tim_valu
+;	sie
+;	lda#	enable_reset_and_start
+;	outb	tim_ctrl
+	
+
+	lda#	enable_ints	; for interrupt
+	outb 	kbd_ctrl	; allow bits to be interpreted
+	sie		; turn IE to 1
+	
+
+	
+;timerLoop:	inb	tim_stat
+;	jge	loop
+;
+;	lda#	reset_ready_bit
+;	outb	tim_ctrl
+
+
+	psh#	$600	; push array1 into display
+	psh#	6	; push num of rows into display
+	psh#	7	; push num of cols into display
+	psh#	$700	; push array2 into display
+	jsr	screen	; go to screen, which prints grids
+	ads#	4	; clean up
+
+;	jmp	timerLoop
+
+;	lda#	reload
+;	outw	tim_valu
+;timeToLoop:	inb	tim_stat
+;	jge	timeToLoop
+
+;	lda#	reload
+;	outw	tim_valu
+;	outb	crt_data
+
+
+	inc	genCount	; which generation are we on?
+	inc	totalGenCount	; which cumulative generation are we on?
+
+	jsr	put_nl	; new line for prettiness
+
+	jmp	genLoop	; go back to top of main loop
+
+	
+mainEnd:	lda#	0	; load value 0 to
+	sta	genCount	; reset genCount
+
+	jmp	mainLoop	; restart main, only leave if userInput is 0
+
+	.equ	@, $400
+	.equ	array1, 5	; value of array1
+	.equ	row, 4	; value of row
+	.equ	col, 3	; value of col
+	.equ	array2, 2	; value of array2
+
+; takes user input
+pause:	nop		; each nop takes about .10 sec
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop		; this gives it enoguh time
+	nop		; to mimic the nextGen computation time
+	nop		; b/c gen1 doesnt calculate thru nextGen
+	inc	pauseCounter	; pauseCounter++
+	lda	pauseCounter	; check if pauseCounter
+	cma#	$FFF	; is greater than large value
+	jgt	skipNextGen	; if it is, move onto nextGen for gen1
+	jmp	pause	; else, do more nop
+
+; subroutine that finds the next generation of grid and puts it in newGrid
+nextGen:	pshf		; push fp
+	tsf		; set fp to sp
+	psha		; push acc
+	pshx		; push xr
+
+	lda	genCount	; check gen #
+	cma#	0	; if its gen 0
+	jeq	nGenLoop	; go straight to  calculations
+
+	ldx#	0	; set index register to 0
+
+replaceFirst:	lda& !	array2	; grab array2
+	sta& !	array1	; put it into array1
+
+	inc	rpCounter	; counter for replacing++
+	adx#	1	; add 1 to it
+	lda	rpCounter	; if replaceCounter is less than size
+	cma#	42	; dont stop until you reached array size
+	jlt	replaceFirst	; leave if transfer is finished
+
+nGenLoop:	lda	index	; take your index value, 10, col + 2
+	cma# !	row*col	; the 2 is for the "outer ring of 0"
+	jgt	genEnd	; if you checked all neighbors, leave nextGen
+
+checkUL:	ldx	index	; load 10
+	sbx !	col	; subtract to move pos above pos in array
+	sbx#	1	; move 1 position left of the above pos
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkU	; check above this pos
+	inc	neighbors	; if it has a neighbor in UL, +1
+
+checkU:	ldx	index	; load 10
+	sbx !	col	; subtract 7, directly above
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkUR	; check UR position
+	inc	neighbors	; if it has a neighbor in U, +1
+
+checkUR:	ldx	index	; load 10
+	sbx !	col	; subtract 7, directly above
+	adx#	1	; move 1 position right of above pos
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkL	; check L position
+	inc	neighbors	; if it has a neighbor in UR, +1
+
+checkL:	ldx	index	; load 10
+	sbx#	1	; subtract 1, directly left of pos
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkR	; check R position
+	inc	neighbors	; if it has a neighbor in L, +1
+
+checkR:	ldx	index	; load 10
+	adx#	1	; add 1, directly right of pos
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkDL	; check DL position
+	inc	neighbors	; if it has a neighbor in R, +1
+
+checkDL:	ldx	index	; load 10
+	adx !	col	; add 7, directly below
+	sbx#	1	; move 1 pos left from directly below
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkD	; check D position
+	inc	neighbors	; if it has a neighbor in DL, +1
+
+checkD:	ldx	index	; load 10
+	adx !	col	; add 7, directly below
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkDR	; check DR position
+	inc	neighbors	; if it has a neighbor in D, +1
+
+checkDR:	ldx	index	; load 10
+	adx !	col	; add 7, directly below
+	adx#	1	; move 1 pos right from directly below
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	checkCell	; move into checkCell, which checks if dead or alive
+	inc	neighbors	; if it has a neighbor in DR, +1
+
+checkCell:	ldx	index	; load 10
+	lda& !	array1	; check if dead or alive
+	cma#	0	; if it is dead
+	jeq	dead	; then move onto dead label
+
+alive:	lda	neighbors	; load the number of neighbors
+	cma#	2	; compare neighbors to 2
+	jlt	setZero	; if you have < 2 neighbors, its dead
+	cma#	3	; compare neighbors to 3
+	jgt	setZero	; if you have > 3 neighbors, its dead
+	lda#	1	; else, cell is still alive
+	sta& !	array2	; put alive cell into array2
+	jmp	incIndex	; move onto next cell
+	
+setZero:	lda#	0	; take the value 0, b/c its dead
+	sta& !	array2	; and throw it in array2
+	jmp	incIndex	; move onto next cell
+
+dead:	lda	neighbors	; load num of neighbors, if its dead
+	cma#	3	; but it has 3 neighbors
+	jeq	resurrect	; its alive again
+	jmp	incIndex	; move onto next cell
+
+resurrect:	lda#	1	; take an alive cell
+	sta& !	array2	; and throw it into array2
+
+incIndex:	lda#	0	; take the value of 0 to
+	sta	neighbors	; reset neighbors for another nextGen run
+
+	inc	indexCounter	; check which part of the array were on
+	
+	lda	indexCounter	; look at which element of row its on
+	cma !	col	; if you passed number of elements in row
+	jeq	nextRow	; move to the next row
+	inc	index	; else, move next pos by 1
+	jmp	nGenLoop	; start nextGen again for next index
+
+nextRow:	lda#	3	; take the value 3 (including outer ring) for next row
+	ada	index	; move index pos to next row 
+	sta	index	; this its position
+	lda#	0	; take the value of 0 to
+	sta	indexCounter	; reset indexCounter
+	jmp	nGenLoop	; restart nextGen until array2 is made
+
+genEnd:	lda#	10	; when nextGen is done
+	sta	index	; reset index
+
+	lda#	0	; take the value of 0 to
+	sta	rpCounter	; reset replaceCounter
+
+	popx		; pop xr
+	popa		; pop acc
+	popf		; pop fp
+	rtn		; return to main
+; printing screen stuff below
+	.equ	@, $300
+	.equ	printArray1, 5	; value of array1
+	.equ	printRow, 4	; value of row
+	.equ	printCol, 3	; value of col
+	.equ	printArray2, 2	; value of array2
+
+screen:	pshf		; push fp
+	tsf		; set fp to sp
+	psha		; push acc
+	pshx		; push xr
+
+;	lda#	CLEAR_SCREEN
+;	outb	kbd_ctrl
+;	sie		; allow for interrupts
+
+	ldx#	0	; load index with 0
+printLoop:	lda	nxLnCounter	; counts number of chars before move to next line
+	cma !	printCol	; if its greater than elements in a row
+	jgt	printNxLn	; print a new line
+	
+contPrintLoop:	lda#	0	; take the value of 0 to
+	sta	spaceCounter	; reset spaceCounter
+
+	lda 	printCounter	; checks if array ended
+	cma# 	42	; if greater than row*col
+	jgt	printEnd	; leave screen
+
+	lda	genCount	; check if generation 0 has been printed
+	cma#	0	; if its passed generation 0
+	jgt	printSecond	; print array2
+
+	lda& !	printArray1	; else print array1
+
+skipFirst:	cma#	1	; if the number is 1
+	jge	printAsterisk	; print asterisk
+
+	cma#	0	; if the number is 0
+	jge	printDot	; print dot
+
+printSpace:	lda#	$20	; load ASCII value for space to
+	outb	crt_data	; print space after value
+	adx# 	1	; move to next pos of array 
+	lda#	0	; reset ACC to 0
+	inc	nxLnCounter	; we have passed one index of the array
+	inc	printCounter	; check how many times printed, dont go over row*col
+	jmp	printLoop	; go back to top of printing grid, $31B
+
+; everytime you print array2, move contents of array2 into array1
+
+printNxLn:	lda#	1	; load value of 1 to
+	sta	nxLnCounter	; reset nxLnCounter
+
+	jsr	put_nl	; prints \n
+
+	inc	spaceCounter	; check how many times spaces is placed
+	
+	cma	spaceCounter	; if it printed to the amt of spaces in a nxLn
+	jle	contPrintLoop	; continue printing the rest of the grid
+	jmp	printNxLn	; print the next line
+
+printDot:	lda#	$2E	; ASCII for dot
+	outb	crt_data	; print the dot
+	jmp	printSpace	; go to label which, prints a space
+
+printAsterisk:	lda#	$2A	; ASCII for asterisk
+	outb	crt_data	; print the asterisk
+	jmp	printSpace	; go to label which, prints a space
+
+printSecond:	lda& !	printArray2	; load array2
+	jmp	skipFirst	; go to label, which prints asteriks or dot
+
+printEnd:	;cie		; dont allow interrupts after grid print
+
+	lda#	1	; take the value of 1
+	sta	printCounter	; to reset the printCounter
+
+	popx		; pop xr
+	popa		; pop acc
+	popf		; pop fp
+	rtn		; return back to the main
+
+endOfProg:	jsr	put_nl	; print a new line
+
+	psh#	endPrompt_len	; push the length of endPrompt
+	psh#	endPrompt	; push the contents of endPrompt
+	jsr	put_str	; print "End of program."
+	ads#	2	; clean up
+
+	hlt		; stop the program
+
+timer:	psha		; push acc
+	lda#	enable_and_reset	; enables timer interrupts, resets ready bit
+	outb	tim_ctrl	; start timer
+	lda#	45	; take ASCII value of "E", (was just used to test if timer was reached)
+	outb	crt_data	; print "E"
+	popa		; pop acc
+	irtn		; kill isr, return to where it was called from
+
+kbd_int:	psha		; push acc, nterrupt subroutine, #337
+	inb	kbd_data	; removes char from buffer
+
+	lda#	ex_point	; prints "!", but we were going to make this
+	outb	crt_data	; reset reload so that timer hits 0
+;	lda#	$FFF
+;	sta	pause
+;	lda#	0
+;	sta	reload
+
+	popa		; pop acc
+	irtn		; kill isr, return to where it was called from
+
+	.equ	@, $500
+	.blkw	$100, 0	; place 0s behind array1
+
+	.equ	@, $600	; [row,col]
+grid:	.word	0	; $600 [1,1]
+	.word	0	; $601 [1,2]
+	.word	0	; $602 [1,3]
+	.word	0	; $603 [1,4]
+	.word	0	; $604 [1,5]
+	.word	0	; $605 [1,6]
+	.word	0	; $606 [1,7]
+	.word	0	; $607 [2,1]
+	.word	0	; $608 [2,2]
+	.word	1	; $609 [2,3]
+	.word	0	; $60A [2,4]
+	.word	0	; $60B [2,5]
+	.word	0	; $60C [2,6]
+	.word	0	; $60D [2,7]
+	.word	0	; $60E [3,1]
+	.word	0	; $60F [3,2]
+	.word	0	; $610 [3,3]
+	.word	1	; $611 [3,4]
+	.word	0	; $612 [3,5]
+	.word	0	; $613 [3,6]
+	.word	0	; $614 [3,7]
+	.word	0	; $615 [4,1]
+	.word	1	; $616 [4,2]
+	.word	1	; $617 [4,3]
+	.word	1	; $618 [4,4]
+	.word	0	; $619 [4,5]
+	.word	0	; $61A [4,6]
+	.word	0	; $61B [4,7]
+	.word	0	; $61C [5,1]
+	.word	0	; $61D [5,2]
+	.word	0	; $61E [5,3]
+	.word	0	; $61F [5,4]
+	.word	0	; $620 [5,5]
+	.word	0	; $621 [5,6]
+	.word	0	; $622 [5,7]
+	.word	0	; $623 [6,1]
+	.word	0	; $624 [6,2]
+	.word	0	; $625 [6,3]
+	.word	0	; $626 [6,4]
+	.word	0	; $627 [6,5]
+	.word	0	; $628 [6,6]
+	.word	0	; $629 [6,7]
+	.blkw	20, 0
+
+	.equ	@, $700
+newGrid:	.blkw	42, 0	; array2, filled with 0s
+
+	.equ	@, $800	; variables
+neighbors:	.word	0	; num of neighbors 
+index:	.word	10	; 8 - 2, 2 is the outer ring in subroutine
+indexCounter:	.word	0	; keeps track of location of array we are on
+printCounter:	.word	0	; check how many times printed, dont go over row*col
+nxLnCounter:	.word	0	; counts number of chars before move to next line
+spaceCounter:	.word	0	; checks number of times space is placed
+genCount:	.word	0	; current generation
+totalGenCount:	.word	0	; Keeps track of gen for multiple runs
+numOfGens:	.word	0	; user inputted, number of generations
+rpCounter:	.word	0	; counter, used for replacing
+pauseCounter:	.word	0	; counter to see progress of pausing
+reload:	.word	$002000	; interval for timer
+reloadR:	.word	$002000	; restores reload, after grid is printed
+
+	.equ	@, $A00
+prompt:	.char	'How many new generations would you like to print (enter 0 to end)? ', prompt_len
+endPrompt:	.char	'End of program.', endPrompt_len
+genPrompt:	.char	'Generation:  ', genPrompt_len
+
+.equ	@, $FF8	; put kbd_int addr into $FF8
+	.word	kbd_int	; move to keyboard_isr
+
+.equ	@, $FFB	; put timer addr into $FFB
+	.word	timer	; move to timer_isr
+	.end

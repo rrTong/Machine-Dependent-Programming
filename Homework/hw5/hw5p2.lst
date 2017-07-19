@@ -1,0 +1,84 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@, $000
+  2.              	.equ	stack, $200
+  3.              	.equ	size, 27
+  4.  000 020200  	lds#	stack
+  5.  001 030000  	ldf#	0
+  6.              
+  7.  002 080100  	psh#	string
+  8.  003 08001B  	psh#	size
+  9.  004 080109  	psh#	newString
+ 10.              
+ 11.  005 412020  	jsr	title
+ 12.              
+ 13.  006 120003  	ads#	3
+ 14.              
+ 15.  007 FFFFFF  	hlt
+ 16.              
+ 17.              	.equ	@, $020
+ 18.              	.equ	string1, 4
+ 19.              	.equ	size1, 3
+ 20.              	.equ	newString1, 2
+ 21.              
+ 22.  020 FFF012  title:	pshf			; push stuff
+ 23.  021 FFF008  	tsf
+ 24.  022 FFF010  	psha
+ 25.  023 FFF011  	pshx
+ 26.  024 010000  	ldx#	0
+ 27.              
+ 28.  025 507004  loop:	ldc* !	string1		; loads string
+ 29.              
+ 30.  026 200061  	cma#	'a'		; checks if lowerCase
+ 31.  027 4A2038  	jlt	next		; else leave it as is
+ 32.  028 20007A  	cma#	'z'		
+ 33.  029 4D202C  	jgt	upperToLower
+ 34.              
+ 35.  02A 140020  	sba#	$20		; lowerCase ==> upperCase
+ 36.  02B 402038  	jmp	next
+ 37.              
+ 38.  02C 507004  upperToLower:	ldc* !	string1		; load string again, b/c jmp here
+ 39.              
+ 40.  02D 200020  	cma#	$20		; is it a space??
+ 41.  02E 482035  	jeq	spaceCase		; if it is, make next letter capital
+ 42.              
+ 43.  02F 200041  	cma#	'A'		; if upperCase, make it lowerCase
+ 44.  030 4A2038  	jlt	next		; else, leave it as is
+ 45.  031 20005A  	cma#	'Z'
+ 46.  032 4D2038  	jgt	next
+ 47.              
+ 48.  033 100020  	ada#	$20		; upperCase ==> lowerCase
+ 49.  034 402038  	jmp	next
+ 50.              	
+ 51.  035 517002  spaceCase:	stc* !	newString1		; store space
+ 52.  036 603003  	aoc !	size1
+ 53.  037 4A2025  	jlt	loop		; loop to check if lowerCase
+ 54.              
+ 55.  038 517002  next:	stc* !	newString1		; store char
+ 56.  039 603003  	aoc !	size1		
+ 57.  03A 4A202C  	jlt	upperToLower		; check if remaining chars in word is upperCase
+ 58.              	
+ 59.  03B FFF014  	popx			; pop stuff
+ 60.  03C FFF013  	popa
+ 61.  03D FFF015  	popf
+ 62.  03E FFF040  	rtn
+ 63.              
+ 64.              	.equ	@, $100
+ 65.  100 6C4541  string:	.word	$6C4541
+ 66.  101 724E20  	.word	$724E20
+ 67.  102 705974  	.word	$705974
+ 68.  103 484F6E  	.word	$484F6E
+ 69.  104 20694E  	.word	$20694E
+ 70.  105 203330  	.word	$203330
+ 71.  106 205965  	.word	$205965
+ 72.  107 615253  	.word	$615253
+ 73.  108 212020  	.word	$212020
+ 74.              
+ 75.  109 FFFFFFFFFFFFFFFF  newString:	.blkw 9		; newString starts on $109
+ 76.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000025 = LOOP            000109 = NEWSTRING       000002 = NEWSTRING1      
+000038 = NEXT            00001B = SIZE            000003 = SIZE1           
+000035 = SPACECASE       000200 = STACK           000100 = STRING          
+000004 = STRING1         000020 = TITLE           00002C = UPPERTOLOWER    

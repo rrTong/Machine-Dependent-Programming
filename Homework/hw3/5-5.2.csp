@@ -1,0 +1,11 @@
+	ldx	Xsize
+	lda	X
+loop:	soj	loop2
+	jmp	end
+loop2:	mul	X
+	jmp	loop
+end:	hlt
+Xsize:	.word	9
+	.equ	@,$100
+X:	.blkw	10, 2
+	.end

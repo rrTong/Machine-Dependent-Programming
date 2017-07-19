@@ -1,0 +1,577 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ; Homework Assignment 6 and 7
+  2.              ; NAME: Calvin Huang 999776364, Ryan Tong 912327046
+  3.              ; NOTE: Everything works except for Timer and Interrupt
+  4.              ;       (interrupt only outputs '!')
+  5.              	.equ	@, $000	; start at addr 0
+  6.              	.equ	stack, $200	; start stack at $200, stack is before $400
+  7.              
+  8.              ; timer
+  9.              	.equ	crt_data, $317	; outputs ACC to cursor
+ 10.              	.equ	tim_ctrl, $030	; 0011 0000 start timer, w/o load counter
+ 11.              	.equ	tim_stat, $030	
+ 12.              	.equ	tim_valu, $031	
+ 13.              
+ 14.              	.equ	reset_ready_bit, $40	; 0100 0000 clear ready bit
+ 15.              	.equ	start_after_load, $10	; 0001 0000 start timer, after load count
+ 16.              
+ 17.              	.equ	enable_ints, $80	; 1000 0000 enable interrupts
+ 18.              	.equ	kbd_ctrl, $000	; interprets bits 
+ 19.              	.equ	kbd_data, $001	; removes char from buffer
+ 20.              ; miniOS
+ 21.              	.equ	get_num, $E01	; takes user integer and puts in acc
+ 22.              	.equ	put_num, $E00	; takes ACC and prints integer
+ 23.              	.equ	put_str, $E05	; prints str, needs len
+ 24.              	.equ	put_nl, $E06	; prints next line
+ 25.              
+ 26.              	.equ	CLEAR_SCREEN, $01	; clears the screen, never used
+ 27.              
+ 28.              	.equ	CRT_WIDTH, 38	; width of program
+ 29.              
+ 30.              	.equ	enable_and_reset, $C0	; enables timer interrupts, resets ready bit
+ 31.              	.equ	enable_reset_and_start, $D0 ; above and starts timer after loading counter	
+ 32.              
+ 33.              	.equ	stacktop, $E00	; the top of this stack
+ 34.              
+ 35.              ;	.equ	stackstart, $B00
+ 36.              	.equ	ex_point, $21	; holds ASCII value for !
+ 37.              ; main program
+ 38.  000 020200  	lds#	stack	; start sp at $200
+ 39.  001 030000  	ldf#	0	; start fp at 0
+ 40.              
+ 41.  002 000343  	lda#	kbd_int	; load keyboard isr
+ 42.  003 042FF8  	sta	$FF8	; store kbd_int into keyboard int addr
+ 43.              
+ 44.              ;	lds#	stackstart	
+ 45.  004 000080  	lda#	enable_ints	; 
+ 46.  005 712000  	outb	kbd_ctrl
+ 47.              
+ 48.              timeLoop:
+ 49.              ;	inb	tim_stat
+ 50.              ;	jge	timeLoop
+ 51.              
+ 52.              ;	lda#	reset_ready_bit
+ 53.              ;	outb	tim_ctrl
+ 54.              ;	lda#	$20
+ 55.              ;	outb	crt_data
+ 56.              
+ 57.  006 080043  	psh#	prompt_len	; prints "How many generations..."
+ 58.  007 080A00  	psh#	prompt
+ 59.  008 412E05  	jsr	put_str
+ 60.  009 120002  	ads#	2
+ 61.              
+ 62.  00A 412E01  	jsr	get_num
+ 63.  00B 042808  	sta	numOfGens	; store userInput into number of generations
+ 64.              
+ 65.  00C 002808  	lda	numOfGens
+ 66.  00D 200000  	cma#	0	; check if userInput is 0
+ 67.  00E 482331  	jeq	endOfProg	; if it is, jump to end of program
+ 68.              
+ 69.  00F 002806  genLoop:	lda	genCount
+ 70.  010 202808  	cma	numOfGens
+ 71.  011 4D203A  	jgt	mainEnd
+ 72.              
+ 73.  012 200001  	cma#	1	; if you printed gen 0 before
+ 74.  013 4B2015  	jge	promptLoop	; dont need this new line anymore
+ 75.  014 412E06  	jsr	put_nl	; new line only after prompt
+ 76.              
+ 77.  015 08000D  promptLoop:	psh#	genPrompt_len	; prints "Generation:  "
+ 78.  016 080A1C  	psh#	genPrompt
+ 79.  017 412E05  	jsr	put_str	
+ 80.  018 120002  	ads#	2	
+ 81.              
+ 82.  019 002807  	lda	totalGenCount
+ 83.  01A 412E00  	jsr	put_num	; prints "#", whichever generation # we are at
+ 84.              
+ 85.  01B 200001  	cma#	1	; gen1 is in array2 of prior calculation
+ 86.  01C 482400  	jeq	pause	; skip calculation until gen 2
+ 87.              
+ 88.  01D 080600  x:	psh#	$600	; push starting addr of grid
+ 89.  01E 080006  	psh#	6	; push num of rows
+ 90.  01F 080007  	psh#	7	; push num of cols
+ 91.  020 080700  	psh#	$700	; push starting addr of newGrid	
+ 92.  021 412411  	jsr	nextGen
+ 93.              			; go to nextGen, which calculate one gen 
+ 94.  022 120004  	ads#	4	; clean up
+ 95.              
+ 96.  023 000000  skipNextGen:	lda#	0	
+ 97.  024 04280A  	sta	pauseCounter	; reset pauseCounter
+ 98.              
+ 99.  025 020E00  	lds#	stacktop
+100.  026 00280C  	lda	reloadR
+101.  027 04280B  	sta	reload
+102.  028 00280B  	lda	reload
+103.  029 732031  	outw	tim_valu
+104.  02A FFF032  	sie
+105.  02B 0000D0  	lda#	enable_reset_and_start
+106.  02C 712030  	outb	tim_ctrl
+107.              	
+108.              
+109.  02D 000080  	lda#	enable_ints	; interrupt crap
+110.  02E 712000  	outb 	kbd_ctrl
+111.  02F FFF032  	sie
+112.              	
+113.              
+114.              	
+115.              ;timerLoop:	inb	tim_stat
+116.              ;	jge	loop
+117.              ;
+118.              ;	lda#	reset_ready_bit
+119.              ;	outb	tim_ctrl
+120.              
+121.              
+122.  030 080600  	psh#	$600	; push array1 into display
+123.  031 080006  	psh#	6	; push num of rows into display
+124.  032 080007  	psh#	7	; push num of cols into display
+125.  033 080700  	psh#	$700	; push array2 into display
+126.  034 412300  	jsr	screen	; go to screen, which prints grids
+127.  035 120004  	ads#	4	; clean up
+128.              
+129.              ;	jmp	timerLoop
+130.              
+131.              ;	lda#	reload
+132.              ;	outw	tim_valu
+133.              ;timeToLoop:	inb	tim_stat
+134.              ;	jge	timeToLoop
+135.              
+136.              ;	lda#	reload
+137.              ;	outw	tim_valu
+138.              ;	outb	crt_data
+139.              
+140.              
+141.  036 1B2806  	inc	genCount	; which generation are we on?
+142.  037 1B2807  	inc	totalGenCount
+143.              
+144.  038 412E06  	jsr	put_nl	; new line for prettiness
+145.              
+146.  039 40200F  	jmp	genLoop
+147.              
+148.              	
+149.  03A 000000  mainEnd:	lda#	0
+150.  03B 042806  	sta	genCount
+151.              
+152.  03C 402006  	jmp	timeLoop
+153.              
+154.              	.equ	@, $400
+155.              	.equ	array1, 5
+156.              	.equ	row, 4
+157.              	.equ	col, 3
+158.              	.equ	array2, 2
+159.              
+160.              ; takes user input
+161.  400 FFF038  pause:	nop		; each nop takes about .10 sec
+162.  401 FFF038  	nop
+163.  402 FFF038  	nop
+164.  403 FFF038  	nop
+165.  404 FFF038  	nop
+166.  405 FFF038  	nop
+167.  406 FFF038  	nop
+168.  407 FFF038  	nop
+169.  408 FFF038  	nop
+170.  409 FFF038  	nop
+171.  40A FFF038  	nop		; this gives it enough time
+172.  40B FFF038  	nop		; to mimic the nextGen computation time
+173.  40C 1B280A  	inc	pauseCounter
+174.  40D 00280A  	lda	pauseCounter
+175.  40E 200FFF  	cma#	$FFF
+176.  40F 4D2023  	jgt	skipNextGen
+177.  410 402400  	jmp	pause
+178.              
+179.              ; subroutine that finds the next generation of grid and puts it in newGrid
+180.  411 FFF012  nextGen:	pshf
+181.  412 FFF008  	tsf
+182.  413 FFF010  	psha
+183.  414 FFF011  	pshx
+184.              
+185.  415 002806  	lda	genCount	; check gen #
+186.  416 200000  	cma#	0	; if its gen 0
+187.  417 482420  	jeq	loop	; go straight to  calculations
+188.              
+189.  418 010000  	ldx#	0
+190.              
+191.  419 009002  replaceFirst:	lda& !	array2	; grab array2
+192.  41A 049005  	sta& !	array1	; put it into array1
+193.              
+194.  41B 1B2809  	inc	rpCounter
+195.  41C 110001  	adx#	1
+196.  41D 002809  	lda	rpCounter
+197.  41E 20002A  	cma#	42	; dont stop until you reached array size
+198.  41F 4A2419  	jlt	replaceFirst
+199.              
+200.  420 002801  loop:	lda	index
+201.  421 20100C  	cma# !	row*col
+202.  422 4D247A  	jgt	genEnd
+203.              
+204.  423 012801  checkUL:	ldx	index
+205.  424 153003  	sbx !	col
+206.  425 150001  	sbx#	1
+207.  426 009005  	lda& !	array1
+208.  427 200000  	cma#	0
+209.  428 48242A  	jeq	checkU
+210.  429 1B2800  	inc	neighbors
+211.              
+212.  42A 012801  checkU:	ldx	index
+213.  42B 153003  	sbx !	col
+214.  42C 009005  	lda& !	array1
+215.  42D 200000  	cma#	0
+216.  42E 482430  	jeq	checkUR
+217.  42F 1B2800  	inc	neighbors
+218.              
+219.  430 012801  checkUR:	ldx	index
+220.  431 153003  	sbx !	col
+221.  432 110001  	adx#	1
+222.  433 009005  	lda& !	array1
+223.  434 200000  	cma#	0
+224.  435 482437  	jeq	checkL
+225.  436 1B2800  	inc	neighbors
+226.              
+227.  437 012801  checkL:	ldx	index
+228.  438 150001  	sbx#	1
+229.  439 009005  	lda& !	array1
+230.  43A 200000  	cma#	0
+231.  43B 48243D  	jeq	checkR
+232.  43C 1B2800  	inc	neighbors
+233.              
+234.  43D 012801  checkR:	ldx	index
+235.  43E 110001  	adx#	1
+236.  43F 009005  	lda& !	array1
+237.  440 200000  	cma#	0
+238.  441 482443  	jeq	checkDL
+239.  442 1B2800  	inc	neighbors
+240.              
+241.  443 012801  checkDL:	ldx	index
+242.  444 113003  	adx !	col
+243.  445 150001  	sbx#	1
+244.  446 009005  	lda& !	array1
+245.  447 200000  	cma#	0
+246.  448 48244A  	jeq	checkD
+247.  449 1B2800  	inc	neighbors
+248.              
+249.  44A 012801  checkD:	ldx	index
+250.  44B 113003  	adx !	col
+251.  44C 009005  	lda& !	array1
+252.  44D 200000  	cma#	0
+253.  44E 482450  	jeq	checkDR
+254.  44F 1B2800  	inc	neighbors
+255.              
+256.  450 012801  checkDR:	ldx	index
+257.  451 113003  	adx !	col
+258.  452 110001  	adx#	1
+259.  453 009005  	lda& !	array1
+260.  454 200000  	cma#	0
+261.  455 482457  	jeq	checkCell
+262.  456 1B2800  	inc	neighbors
+263.              
+264.  457 012801  checkCell:	ldx	index
+265.  458 009005  	lda& !	array1
+266.  459 200000  	cma#	0
+267.  45A 482466  	jeq	dead
+268.              
+269.  45B 002800  alive:	lda	neighbors
+270.  45C 200002  	cma#	2
+271.  45D 4A2463  	jlt	setZero
+272.  45E 200003  	cma#	3
+273.  45F 4D2463  	jgt	setZero
+274.  460 000001  	lda#	1
+275.  461 049002  	sta& !	array2
+276.  462 40246C  	jmp	incIndex
+277.              	
+278.  463 000000  setZero:	lda#	0
+279.  464 049002  	sta& !	array2
+280.  465 40246C  	jmp	incIndex
+281.              
+282.  466 002800  dead:	lda	neighbors
+283.  467 200003  	cma#	3
+284.  468 48246A  	jeq	resurrect
+285.  469 40246C  	jmp	incIndex
+286.              
+287.  46A 000001  resurrect:	lda#	1
+288.  46B 049002  	sta& !	array2	
+289.              
+290.  46C 000000  incIndex:	lda#	0	; reset neighbors
+291.  46D 042800  	sta	neighbors
+292.              
+293.  46E 1B2802  	inc	indexCounter
+294.              	
+295.  46F 002802  	lda	indexCounter
+296.  470 200007  	cma#	7
+297.  471 482474  	jeq	nextRow
+298.  472 1B2801  	inc	index	; else, move next pos by 1
+299.  473 402420  	jmp	loop
+300.              
+301.  474 000003  nextRow:	lda#	3	; move index pos to next row, add 3
+302.  475 102801  	ada	index
+303.  476 042801  	sta	index
+304.  477 000000  	lda#	0	; reset indexCounter
+305.  478 042802  	sta	indexCounter
+306.  479 402420  	jmp	loop
+307.              
+308.  47A 00000A  genEnd:	lda#	10
+309.  47B 042801  	sta	index
+310.              
+311.  47C 000000  	lda#	0
+312.  47D 042809  	sta	rpCounter
+313.              
+314.  47E FFF014  	popx
+315.  47F FFF013  	popa
+316.  480 FFF015  	popf
+317.  481 FFF040  	rtn
+318.              ; printing screen stuff below
+319.              	.equ	@, $300
+320.              	.equ	printArray1, 5
+321.              	.equ	printRow, 4
+322.              	.equ	printCol, 3
+323.              	.equ	printArray2, 2
+324.              
+325.  300 FFF012  screen:	pshf
+326.  301 FFF008  	tsf
+327.  302 FFF010  	psha
+328.  303 FFF011  	pshx
+329.              
+330.              ;	lda#	CLEAR_SCREEN
+331.              ;	outb	kbd_ctrl
+332.              ;	sie		; allow for interrupts
+333.              
+334.  304 010000  	ldx#	0
+335.  305 002804  printLoop:	lda	nxLnCounter
+336.  306 203003  	cma !	printCol	
+337.  307 4D231C  	jgt	printNxLn
+338.              	
+339.  308 000000  contPrintLoop:	lda#	0
+340.  309 042805  	sta	spaceCounter	; reset spaceCounter
+341.              
+342.  30A 002803  	lda 	printCounter	; checks if array ended
+343.  30B 20002A  	cma# 	42
+344.  30C 4D232B  	jgt	printEnd
+345.              
+346.  30D 002806  	lda	genCount	; check if generation 0 has been printed
+347.  30E 200000  	cma#	0
+348.  30F 4D2329  	jgt	printSecond	
+349.              
+350.  310 009005  	lda& !	printArray1
+351.              
+352.  311 200001  skipFirst:	cma#	1	; if the number is 1
+353.  312 4B2326  	jge	printAsterisk	; print asterisk
+354.              
+355.  313 200000  	cma#	0	; if the number is 0
+356.  314 4B2323  	jge	printDot	; print dot
+357.              
+358.  315 000020  cont2:	lda#	$20	; print space after value
+359.  316 712317  	outb	crt_data
+360.  317 110001  	adx# 	1
+361.  318 000000  	lda#	0
+362.  319 1B2804  	inc	nxLnCounter
+363.  31A 1B2803  	inc	printCounter
+364.  31B 402305  	jmp	printLoop	;$31B
+365.              
+366.              ; everytime you print array2, move contents of array2 into array1
+367.              
+368.  31C 000001  printNxLn:	lda#	1
+369.  31D 042804  	sta	nxLnCounter	; reset nxLnCounter
+370.              
+371.  31E 412E06  	jsr	put_nl	; prints \n
+372.              
+373.  31F 1B2805  	inc	spaceCounter	; check how many times spaces is placed
+374.              	
+375.  320 202805  	cma	spaceCounter	; if it printed to the amt of spaces in a nxLn
+376.  321 4C2308  	jle	contPrintLoop	; continue printing the rest of the grid
+377.  322 40231C  	jmp	printNxLn
+378.              
+379.  323 00002E  printDot:	lda#	$2E	; ASCII for dot
+380.  324 712317  	outb	crt_data
+381.  325 402315  	jmp	cont2
+382.              
+383.  326 00002A  printAsterisk:	lda#	$2A	; ASCII for asterisk
+384.  327 712317  	outb	crt_data
+385.  328 402315  	jmp	cont2
+386.              
+387.  329 009002  printSecond:	lda& !	printArray2
+388.  32A 402311  	jmp	skipFirst
+389.              
+390.              printEnd:	;cie		; dont allow interrupts after grid print
+391.              
+392.  32B 000001  	lda#	1
+393.  32C 042803  	sta	printCounter
+394.              
+395.  32D FFF014  	popx
+396.  32E FFF013  	popa
+397.  32F FFF015  	popf
+398.  330 FFF040  	rtn
+399.              
+400.  331 412E06  endOfProg:	jsr	put_nl
+401.              
+402.  332 08000F  	psh#	endPrompt_len
+403.  333 080A17  	psh#	endPrompt
+404.              
+405.  334 412E05  	jsr	put_str
+406.              
+407.  335 120002  	ads#	2
+408.              
+409.  336 FFFFFF  	hlt
+410.              
+411.  337 FFF012  timer:	pshf
+412.  338 FFF008  	tsf
+413.  339 FFF010  	psha
+414.  33A FFF011  	pshx
+415.  33B 0000C0  	lda#	enable_and_reset
+416.  33C 712030  	outb	tim_ctrl
+417.  33D 00002D  	lda#	45	
+418.  33E 712317  	outb	crt_data
+419.  33F FFF014  	popx
+420.  340 FFF013  	popa
+421.  341 FFF015  	popf
+422.  342 FFF041  	irtn
+423.              
+424.  343 FFF010  kbd_int:	psha		; interrupt subroutine, #337
+425.  344 702001  	inb	kbd_data
+426.              
+427.  345 000021  	lda#	ex_point	; prints "!", but we were going to make this
+428.  346 712317  	outb	crt_data	; reset reload so that timer hits 0
+429.              ;	lda#	$FFF
+430.              ;	sta	pause
+431.              ;	lda#	0
+432.              ;	sta	reload
+433.              
+434.  347 FFF013  	popa
+435.  348 FFF041  	irtn
+436.              
+437.              	.equ	@, $500
+438.  500 000000  	.blkw	$100, 0	; place 0s behind $600
+439.              
+440.              	.equ	@, $600	; [row,col]
+441.  600 000000  grid:	.word	0	; $600 [1,1]
+442.  601 000000  	.word	0	; $601 [1,2]
+443.  602 000000  	.word	0	; $602 [1,3]
+444.  603 000000  	.word	0	; $603 [1,4]
+445.  604 000000  	.word	0	; $604 [1,5]
+446.  605 000000  	.word	0	; $605 [1,6]
+447.  606 000000  	.word	0	; $606 [1,7]
+448.  607 000000  	.word	0	; $607 [2,1]
+449.  608 000000  	.word	0	; $608 [2,2]
+450.  609 000001  	.word	1	; $609 [2,3]
+451.  60A 000000  	.word	0	; $60A [2,4]
+452.  60B 000000  	.word	0	; $60B [2,5]
+453.  60C 000000  	.word	0	; $60C [2,6]
+454.  60D 000000  	.word	0	; $60D [2,7]
+455.  60E 000000  	.word	0	; $60E [3,1]
+456.  60F 000000  	.word	0	; $60F [3,2]
+457.  610 000000  	.word	0	; $610 [3,3]
+458.  611 000001  	.word	1	; $611 [3,4]
+459.  612 000000  	.word	0	; $612 [3,5]
+460.  613 000000  	.word	0	; $613 [3,6]
+461.  614 000000  	.word	0	; $614 [3,7]
+462.  615 000000  	.word	0	; $615 [4,1]
+463.  616 000001  	.word	1	; $616 [4,2]
+464.  617 000001  	.word	1	; $617 [4,3]
+465.  618 000001  	.word	1	; $618 [4,4]
+466.  619 000000  	.word	0	; $619 [4,5]
+467.  61A 000000  	.word	0	; $61A [4,6]
+468.  61B 000000  	.word	0	; $61B [4,7]
+469.  61C 000000  	.word	0	; $61C [5,1]
+470.  61D 000000  	.word	0	; $61D [5,2]
+471.  61E 000000  	.word	0	; $61E [5,3]
+472.  61F 000000  	.word	0	; $61F [5,4]
+473.  620 000000  	.word	0	; $620 [5,5]
+474.  621 000000  	.word	0	; $621 [5,6]
+475.  622 000000  	.word	0	; $622 [5,7]
+476.  623 000000  	.word	0	; $623 [6,1]
+477.  624 000000  	.word	0	; $624 [6,2]
+478.  625 000000  	.word	0	; $625 [6,3]
+479.  626 000000  	.word	0	; $626 [6,4]
+480.  627 000000  	.word	0	; $627 [6,5]
+481.  628 000000  	.word	0	; $628 [6,6]
+482.  629 000000  	.word	0	; $629 [6,7]
+483.  62A 000000  	.blkw	20, 0
+484.              
+485.              	.equ	@, $700
+486.  700 000000  newGrid:	.blkw	42, 0	; array2, filled with 0s
+487.              
+488.              	.equ	@, $800	; variables
+489.  800 000000  neighbors:	.word	0	; num of neighbors 
+490.  801 00000A  index:	.word	10	; 8 - 2, 2 is the outer ring in subroutine
+491.  802 000000  indexCounter:	.word	0	
+492.  803 000000  printCounter:	.word	0
+493.  804 000000  nxLnCounter:	.word	0
+494.  805 000000  spaceCounter:	.word	0
+495.  806 000000  genCount:	.word	0	; current generation
+496.  807 000000  totalGenCount:	.word	0	; Keeps track of gen for multiple runs
+497.  808 000000  numOfGens:	.word	0	; user inputted, number of generations
+498.  809 000000  rpCounter:	.word	0	; counter, used for replacing
+499.  80A 000000  pauseCounter:	.word	0
+500.  80B 002000  reload:	.word	$002000	; interval for timer
+501.  80C 002000  reloadR:	.word	$002000	; restores reload, after grid is printed
+502.              
+503.              	.equ	@, $A00
+504.  A00 486F77  prompt:	.char	'How many new generations would you like to print (enter 0 to end)? ', prompt_len
+      A01 206D61
+      A02 6E7920
+      A03 6E6577
+      A04 206765
+      A05 6E6572
+      A06 617469
+      A07 6F6E73
+      A08 20776F
+      A09 756C64
+      A0A 20796F
+      A0B 75206C
+      A0C 696B65
+      A0D 20746F
+      A0E 207072
+      A0F 696E74
+      A10 202865
+      A11 6E7465
+      A12 722030
+      A13 20746F
+      A14 20656E
+      A15 64293F
+      A16 202020
+505.  A17 456E64  endPrompt:	.char	'End of program.', endPrompt_len
+      A18 206F66
+      A19 207072
+      A1A 6F6772
+      A1B 616D2E
+506.  A1C 47656E  genPrompt:	.char	'Generation:  ', genPrompt_len
+      A1D 657261
+      A1E 74696F
+      A1F 6E3A20
+      A20 202020
+507.              
+508.              .equ	@, $FF8	; put kbd_int addr into $FF8
+509.  FF8 000343  	.word	kbd_int	; move to keyboard_isr
+510.              
+511.              .equ	@, $FFB	; put timer addr into $FFB
+512.  FFB 000337  	.word	timer	; move to timer_isr
+513.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+00045B = ALIVE           000005 = ARRAY1          000002 = ARRAY2          
+000457 = CHECKCELL       00044A = CHECKD          000443 = CHECKDL         
+000450 = CHECKDR         000437 = CHECKL          00043D = CHECKR          
+00042A = CHECKU          000423 = CHECKUL         000430 = CHECKUR         
+000001 = CLEAR_SCREEN    000003 = COL             000315 = CONT2           
+000308 = CONTPRINTLOOP   000317 = CRT_DATA        000026 = CRT_WIDTH       
+000466 = DEAD            0000C0 = ENABLE_AND_RESET000080 = ENABLE_INTS     
+0000D0 = ENABLE_RESET_AND_START000331 = ENDOFPROG       000A17 = ENDPROMPT       
+00000F = ENDPROMPT_LEN   000021 = EX_POINT        000806 = GENCOUNT        
+00047A = GENEND          00000F = GENLOOP         000A1C = GENPROMPT       
+00000D = GENPROMPT_LEN   000E01 = GET_NUM         000600 = GRID            
+00046C = INCINDEX        000801 = INDEX           000802 = INDEXCOUNTER    
+000000 = KBD_CTRL        000001 = KBD_DATA        000343 = KBD_INT         
+000420 = LOOP            00003A = MAINEND         000800 = NEIGHBORS       
+000700 = NEWGRID         000411 = NEXTGEN         000474 = NEXTROW         
+000808 = NUMOFGENS       000804 = NXLNCOUNTER     000400 = PAUSE           
+00080A = PAUSECOUNTER    000005 = PRINTARRAY1     000002 = PRINTARRAY2     
+000326 = PRINTASTERISK   000003 = PRINTCOL        000803 = PRINTCOUNTER    
+000323 = PRINTDOT        00032B = PRINTEND        000305 = PRINTLOOP       
+00031C = PRINTNXLN       000004 = PRINTROW        000329 = PRINTSECOND     
+000A00 = PROMPT          000015 = PROMPTLOOP      000043 = PROMPT_LEN      
+000E06 = PUT_NL          000E00 = PUT_NUM         000E05 = PUT_STR         
+00080B = RELOAD          00080C = RELOADR         000419 = REPLACEFIRST    
+000040 = RESET_READY_BIT 00046A = RESURRECT       000004 = ROW             
+000809 = RPCOUNTER       000300 = SCREEN          000463 = SETZERO         
+000311 = SKIPFIRST       000023 = SKIPNEXTGEN     000805 = SPACECOUNTER    
+000200 = STACK           000E00 = STACKTOP        000010 = START_AFTER_LOAD
+000006 = TIMELOOP        000337 = TIMER           000030 = TIM_CTRL        
+000030 = TIM_STAT        000031 = TIM_VALU        000807 = TOTALGENCOUNT   
+00001D = X               

@@ -1,0 +1,76 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@, $000
+  2.              	.equ	stack, $200
+  3.              	.equ	size, 27
+  4.  000 020200  	lds#	stack
+  5.  001 030000  	ldf#	0
+  6.              
+  7.  002 080100  	psh#	string
+  8.  003 08001B  	psh#	size
+  9.  004 080109  	psh#	newString
+ 10.              
+ 11.  005 412020  	jsr	swapcase
+ 12.              
+ 13.  006 120003  	ads#	3
+ 14.              
+ 15.  007 FFFFFF  	hlt
+ 16.              
+ 17.              	.equ	@, $020
+ 18.              	.equ	string1, 4
+ 19.              	.equ	size1, 3
+ 20.              	.equ	newString1, 2
+ 21.              
+ 22.  020 FFF012  swapcase:	pshf
+ 23.  021 FFF008  	tsf
+ 24.  022 FFF010  	psha
+ 25.  023 FFF011  	pshx
+ 26.  024 010000  	ldx#	0
+ 27.              
+ 28.  025 507004  loop:	ldc* !	string1		; loads string
+ 29.              
+ 30.  026 200041  	cma#	'A'		; checks if upperCase
+ 31.  027 4A2032  	jlt	next
+ 32.  028 20005A  	cma#	'Z'		
+ 33.  029 4C2031  	jle	upperToLower
+ 34.              
+ 35.  02A 200061  	cma#	'a'		; checks if lowerCase
+ 36.  02B 4A2032  	jlt	next
+ 37.  02C 20007A  	cma#	'z'		; if > z, not a letter
+ 38.  02D 4A202F  	jlt	lowerToUpper
+ 39.              
+ 40.  02E 402032  	jmp	next
+ 41.              
+ 42.  02F 140020  lowerToUpper:	sba#	$20		; lowerCase ==> upperCase
+ 43.  030 402032  	jmp	next
+ 44.              
+ 45.  031 100020  upperToLower:	ada# 	$20		; upperCase ==> lowerCase
+ 46.              
+ 47.  032 517002  next:	stc* !	newString1
+ 48.  033 603003  	aoc !	size1		; moves to next character
+ 49.  034 4A2025  	jlt	loop
+ 50.              	
+ 51.  035 FFF014  	popx
+ 52.  036 FFF013  	popa
+ 53.  037 FFF015  	popf
+ 54.  038 FFF040  	rtn
+ 55.              
+ 56.              	.equ	@, $100
+ 57.  100 6C4541  string:	.word	$6C4541
+ 58.  101 724E20  	.word	$724E20
+ 59.  102 705974  	.word	$705974
+ 60.  103 484F6E  	.word	$484F6E
+ 61.  104 20694E  	.word	$20694E
+ 62.  105 203330  	.word	$203330
+ 63.  106 205965  	.word	$205965
+ 64.  107 615253  	.word	$615253
+ 65.  108 212020  	.word	$212020
+ 66.              
+ 67.  109 FFFFFFFFFFFFFFFF  newString:	.blkw 9		; newString starts on $109
+ 68.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000025 = LOOP            00002F = LOWERTOUPPER    000109 = NEWSTRING       
+000002 = NEWSTRING1      000032 = NEXT            00001B = SIZE            
+000003 = SIZE1           000200 = STACK           000100 = STRING          
+000004 = STRING1         000020 = SWAPCASE        000031 = UPPERTOLOWER    

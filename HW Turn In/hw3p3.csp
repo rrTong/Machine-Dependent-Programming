@@ -1,0 +1,31 @@
+	.equ	@,$000
+	.equ	arr,$100
+	.equ	n, 5
+
+	lda	base
+	mul	neg_1
+	sta	neg_base
+	lda	neg_1
+	sta	big
+	ldx	base
+	adx	neg_base
+loop:	cmx#	n
+	jge	done
+	lda+	a
+	cma	big
+	jle	endif
+	sta	big
+endif:	adx#	1
+	jmp	loop
+done:	hlt
+base:	.word	-2
+neg_base:	.word	0
+neg_1:	.word	-1
+big:	.word	0	;$013
+	.equ	@,arr
+a:	.word	17
+	.word	5
+	.word	1465
+	.word	689
+	.word	57
+	.end

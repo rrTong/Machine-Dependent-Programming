@@ -1,0 +1,414 @@
+; NAME: Calvin Huang, Ryan Tong
+	.equ	@, $000
+	.equ	stack, $200
+
+; timer
+	.equ	crt_data, $317
+	.equ	tim_ctrl, $030
+	.equ	tim_stat, $030
+	.equ	tim_valu, $031
+
+	.equ	reset_ready_bit, $40
+	.equ	start_after_load, $10
+
+	.equ	enable_ints, $80
+	.equ	kbd_ctrl, $000
+	.equ	kbd_data, $001
+; miniOS
+	.equ	get_num, $E01	; takes user integer and puts in acc
+	.equ	put_num, $E00	; takes ACC and prints integer
+	.equ	put_str, $E05	; prints str, needs len
+	.equ	put_nl, $E06	; prints next line
+
+	.equ	CLEAR_SCREEN, $01
+
+	.equ	CRT_WIDTH, 38
+; main program
+	lds#	stack
+	ldf#	0
+
+	lda	reload
+	outw	tim_valu
+	lda#	reset_ready_bit + start_after_load
+	outb	tim_ctrl
+
+timeLoop:	inb	tim_stat
+	jge	timeLoop
+
+	lda#	reset_ready_bit
+	outb	tim_ctrl
+
+	psh#	prompt_len	; prints "How many generations..."
+	psh#	prompt
+	jsr	put_str
+	ads#	2
+
+	jsr	get_num
+	sta	numOfGens	; store userInput into number of generations
+
+	lda	numOfGens
+	cma#	0	; check if userInput is 0
+	jeq	endOfProg	; if it is, jump to end of program
+
+genLoop:	lda	genCount
+	cma	numOfGens
+	jgt	mainEnd
+
+	jsr	put_nl	; new line for syntax
+
+	psh#	genPrompt_len	; prints "Generation:  "
+	psh#	genPrompt
+	jsr	put_str	
+	ads#	2	
+
+	lda	genCount
+	jsr	put_num	; prints "#", whichever generation # we are at
+
+	cma#	1
+	jeq	skipNextGen	; skip calculation until gen 2
+
+	psh#	$600	; push starting addr of grid
+	psh#	6	; push num of rows
+	psh#	7	; push num of cols
+	psh#	$700	; push starting addr of newGrid	
+	jsr	nextGen	
+	ads#	4
+
+skipNextGen:	psh#	$600	; push array1 into display
+	psh#	6	; push num of rows into display
+	psh#	7	; push num of cols into display
+	psh#	$700	; push array2 into display
+	jsr	screen
+	ads#	4
+
+	inc	genCount
+	jmp	genLoop
+
+	
+mainEnd:	lda#	0
+	sta	genCount
+
+	jmp	timeLoop
+
+	.equ	@, $400
+	.equ	array1, 5
+	.equ	row, 4
+	.equ	col, 3
+	.equ	array2, 2
+
+; takes user input
+userInput:	pshf
+	tsf
+	psha
+	pshx
+
+	jsr	get_num
+	sta	numOfGens	; store userInput into number of generations
+
+	lda	numOfGens
+	cma#	0	; check if userInput is 0
+	jeq	endOfProg	; if it is, jump to end of program
+
+	popx
+	popa
+	popf
+	rtn
+
+; subroutine that finds the next generation of grid and puts it in newGrid
+nextGen:	pshf
+	tsf
+	psha
+	pshx
+
+	lda	genCount
+	cma#	0
+	jeq	loop
+
+	ldx#	0
+
+replaceFirst:	lda& !	array2
+	sta& !	array1
+
+	inc	rpCounter
+	adx#	1
+	lda	rpCounter
+	cma#	42
+	jlt	replaceFirst
+
+loop:	lda	index
+	cma# !	row*col
+	jgt	end
+
+checkUL:	ldx	index
+	sbx !	col
+	sbx#	1
+	lda& !	array1
+	cma#	0
+	jeq	checkU
+	inc	neighbors
+
+checkU:	ldx	index
+	sbx !	col
+	lda& !	array1
+	cma#	0
+	jeq	checkUR
+	inc	neighbors
+
+checkUR:	ldx	index
+	sbx !	col
+	adx#	1
+	lda& !	array1
+	cma#	0
+	jeq	checkL
+	inc	neighbors
+
+checkL:	ldx	index
+	sbx#	1
+	lda& !	array1
+	cma#	0
+	jeq	checkR
+	inc	neighbors
+
+checkR:	ldx	index
+	adx#	1
+	lda& !	array1
+	cma#	0
+	jeq	checkDL
+	inc	neighbors
+
+checkDL:	ldx	index
+	adx !	col
+	sbx#	1
+	lda& !	array1
+	cma#	0
+	jeq	checkD
+	inc	neighbors
+
+checkD:	ldx	index
+	adx !	col
+	lda& !	array1
+	cma#	0
+	jeq	checkDR
+	inc	neighbors
+
+checkDR:	ldx	index
+	adx !	col
+	adx#	1
+	lda& !	array1
+	cma#	0
+	jeq	checkCell
+	inc	neighbors
+
+checkCell:	ldx	index
+	lda& !	array1
+	cma#	0
+	jeq	dead
+
+alive:	lda	neighbors
+	cma#	2
+	jlt	setZero
+	cma#	3
+	jgt	setZero
+	lda#	1
+	sta& !	array2
+	jmp	incIndex
+	
+setZero:	lda#	0
+	sta& !	array2
+	jmp	incIndex
+
+dead:	lda	neighbors
+	cma#	3
+	jeq	resurrect
+	jmp	incIndex
+
+resurrect:	lda#	1
+	sta& !	array2	
+
+incIndex:	lda#	0	; reset neighbors
+	sta	neighbors
+
+	inc	indexCounter
+	
+	lda	indexCounter
+	cma#	7
+	jeq	nextRow
+	inc	index	; else, move next pos by 1
+	jmp	loop
+
+nextRow:	lda#	3	; move index pos to next row, add 3
+	ada	index
+	sta	index
+	lda#	0	; reset indexCounter
+	sta	indexCounter
+	jmp	loop
+
+end:	lda#	10
+	sta	index
+
+	lda#	0
+	sta	rpCounter
+
+	popx
+	popa
+	popf
+	rtn
+; printing screen stuff below
+	.equ	@, $300
+	.equ	printArray1, 5
+	.equ	printRow, 4
+	.equ	printCol, 3
+	.equ	printArray2, 2
+
+screen:	pshf
+	tsf
+	psha
+	pshx
+
+;	lda#	CLEAR_SCREEN
+;	outb	kbd_ctrl
+;	sie
+
+	ldx#	0
+printLoop:	lda	nxLnCounter
+	cma !	printCol	
+	jgt	printNxLn
+	
+contPrintLoop:	lda#	0
+	sta	spaceCounter	; reset spaceCounter
+
+	lda 	printCounter	; checks if array ended
+	cma# 	42
+	jgt	printEnd
+
+	lda	genCount	; check if generation 0 has been printed
+	cma#	0
+	jgt	printSecond	
+
+	lda& !	printArray1
+
+skipFirst:	cma#	1	; if the number is 1
+	jge	printAsterisk	; print asterisk
+
+	cma#	0	; if the number is 0
+	jge	printDot	; print dot
+
+cont2:	lda#	$20	; print space after value
+	outb	crt_data
+	adx# 	1
+	lda#	0
+	inc	nxLnCounter
+	inc	printCounter
+	jmp	printLoop
+
+; everytime you print array2, move contents of array2 into array1
+
+printNxLn:	lda#	1
+	sta	nxLnCounter	; reset nxLnCounter
+
+	jsr	put_nl	; prints \n
+
+	inc	spaceCounter	; check how many times spaces is placed
+	
+	cma	spaceCounter	; if it printed to the amt of spaces in a nxLn
+	jle	contPrintLoop	; continue printing the rest of the grid
+	jmp	printNxLn
+
+printDot:	lda#	$2E	; ASCII for dot
+	outb	crt_data
+	jmp	cont2
+
+printAsterisk:	lda#	$2A	; ASCII for asterisk
+	outb	crt_data
+	jmp	cont2
+
+printSecond:	lda& !	printArray2
+	jmp	skipFirst
+
+printEnd:	cie
+
+	lda#	1
+	sta	printCounter
+
+	popx
+	popa
+	popf
+	rtn
+
+endOfProg:	jsr	put_nl
+
+	psh#	endPrompt_len
+	psh#	endPrompt
+
+	jsr	put_str
+
+	ads#	2
+
+	hlt
+
+	.equ	@, $600	; [row,col]
+grid:	.word	0	; $600 [1,1]
+	.word	0	; $601 [1,2]
+	.word	0	; $602 [1,3]
+	.word	0	; $603 [1,4]
+	.word	0	; $604 [1,5]
+	.word	0	; $605 [1,6]
+	.word	0	; $606 [1,7]
+	.word	0	; $607 [2,1]
+	.word	0	; $608 [2,2]
+	.word	1	; $609 [2,3]
+	.word	0	; $60A [2,4]
+	.word	0	; $60B [2,5]
+	.word	0	; $60C [2,6]
+	.word	0	; $60D [2,7]
+	.word	0	; $60E [3,1]
+	.word	0	; $60F [3,2]
+	.word	0	; $610 [3,3]
+	.word	1	; $611 [3,4]
+	.word	0	; $612 [3,5]
+	.word	0	; $613 [3,6]
+	.word	0	; $614 [3,7]
+	.word	0	; $615 [4,1]
+	.word	1	; $616 [4,2]
+	.word	1	; $617 [4,3]
+	.word	1	; $618 [4,4]
+	.word	0	; $619 [4,5]
+	.word	0	; $61A [4,6]
+	.word	0	; $61B [4,7]
+	.word	0	; $61C [5,1]
+	.word	0	; $61D [5,2]
+	.word	0	; $61E [5,3]
+	.word	0	; $61F [5,4]
+	.word	0	; $620 [5,5]
+	.word	0	; $621 [5,6]
+	.word	0	; $622 [5,7]
+	.word	0	; $623 [6,1]
+	.word	0	; $624 [6,2]
+	.word	0	; $625 [6,3]
+	.word	0	; $626 [6,4]
+	.word	0	; $627 [6,5]
+	.word	0	; $628 [6,6]
+	.word	0	; $629 [6,7]
+	.blkw	20, 0
+
+	.equ	@, $700
+newGrid:	.blkw	42, 0
+	.end
+
+	.equ	@, $800	; variables
+neighbors:	.word	0
+index:	.word	10	; 8 - 2, 2 is the outer ring in subroutine
+indexCounter:	.word	0
+printCounter:	.word	0
+nxLnCounter:	.word	0
+spaceCounter:	.word	0
+genCount:	.word	0
+numOfGens:	.word	0
+rpCounter:	.word	0
+reload:	.word	$002000
+
+
+	.equ	@, $A00
+prompt:	.char	'How many new generations would you like to print (enter 0 to end)? ', prompt_len
+endPrompt:	.char	'End of program.', endPrompt_len
+genPrompt:	.char	'Generation:  ', genPrompt_len

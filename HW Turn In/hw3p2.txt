@@ -1,0 +1,5 @@
+In my experience, the memory of my three methods use up the same amount, taking up the same number of memory addresses.
+
+Based on the answers found in the back of the book, I could have condensed my code for the AOC and SOJ methods, therefore using less memory. If I had used a single loop rather than two loops for these methods, there would be less memory addresses being used, using less memory overall.
+
+SOJ would use the least amount of memory, followed by higher memory usage with the AOC method, and having no special looping instructions would use the most memory.

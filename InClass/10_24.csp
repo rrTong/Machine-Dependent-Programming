@@ -1,0 +1,34 @@
+	.equ	num_of_rows, 4
+	.equ	num_of_cols, 3
+	.equ	max_row, num_of_rows - 1
+	.equ	max_col, num_of_cols - 1
+
+rloop:	lda	curr_row
+	cma#	max_row
+	jgt	rloop_end
+
+cloop:	lda	curr_col
+	cma#	max_col
+	jgt	cloop_end
+
+	lda	curr_row
+	mul#	num_of_cols
+	ada	curr_col
+	tax	
+
+	lda	curr_row
+	mul	curr_col
+	sta+	table
+
+	inc	curr_col
+	jmp	cloop
+
+cloop_end:	inc	curr_row
+	clr	curr_col
+	jmp	rloop
+
+rloop_end:	hlt
+
+curr_row:	.word	0
+curr_col:	.word	0
+table:	.blkw	num_of_rows * num_of_cols, -1

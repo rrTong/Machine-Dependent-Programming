@@ -1,0 +1,76 @@
+	.equ	@, $000
+	.equ	stack, $200
+	.equ	size, 27
+	lds#	stack
+	ldf#	0
+
+	psh#	string
+	psh#	size
+	psh#	newString
+
+	jsr	title
+
+	ads#	3
+
+	hlt
+
+	.equ	@, $020
+	.equ	string1, 4
+	.equ	size1, 3
+	.equ	newString1, 2
+
+title:	pshf			; push stuff
+	tsf
+	psha
+	pshx
+	ldx#	0
+
+loop:	ldc* !	string1		; loads string
+
+	cma#	'a'		; checks if lowerCase
+	jlt	next		; else leave it as is
+	cma#	'z'		
+	jgt	upperToLower
+
+	sba#	$20		; lowerCase ==> upperCase
+	jmp	next
+
+upperToLower:	ldc* !	string1		; load string again, b/c jmp here
+
+	cma#	$20		; is it a space??
+	jeq	spaceCase		; if it is, make next letter capital
+
+	cma#	'A'		; if upperCase, make it lowerCase
+	jlt	next		; else, leave it as is
+	cma#	'Z'
+	jgt	next
+
+	ada#	$20		; upperCase ==> lowerCase
+	jmp	next
+	
+spaceCase:	stc* !	newString1		; store space
+	aoc !	size1
+	jlt	loop		; loop to check if lowerCase
+
+next:	stc* !	newString1		; store char
+	aoc !	size1		
+	jlt	upperToLower		; check if remaining chars in word is upperCase
+	
+	popx			; pop stuff
+	popa
+	popf
+	rtn
+
+	.equ	@, $100
+string:	.word	$6C4541
+	.word	$724E20
+	.word	$705974
+	.word	$484F6E
+	.word	$20694E
+	.word	$203330
+	.word	$205965
+	.word	$615253
+	.word	$212020
+
+newString:	.blkw 9		; newString starts on $109
+	.end

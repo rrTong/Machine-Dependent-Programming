@@ -1,0 +1,75 @@
+	.equ	@,$000
+	.equ	N, 6
+
+loop:	ldx	i
+	txa
+	sta	min
+
+	ldx	i	;j = i + 1
+	adx#	1
+	stx	j
+
+loop2:	lda	j	;j < arraySize
+	cma	arraySize
+	jge	swap
+
+	ldx	j
+	lda+	array	;if loop
+	sta	currCompare
+	
+	ldx	min	
+	lda+	array
+	cma	currCompare
+	jlt	incJ
+
+	lda	j	;min = j
+	sta	min
+
+	ada#	1	;j++
+	sta	j
+	jmp	loop2
+
+incI:	lda	i
+	cma	arraySize
+	jge	end
+	ada#	1
+	sta	i
+	jmp	loop
+
+incJ:	lda	j
+	ada#	1
+	sta	j
+	jmp	loop2
+
+swap:	ldx	i
+	lda+	array
+	sta	temp
+
+	ldx	min
+	lda+	array
+	sta	swapMin
+	ldx	i
+	lda	swapMin
+	sta+	array
+
+	lda	temp
+	ldx	min
+	sta+	array
+	jmp	incI
+
+end:	hlt
+i:	.word	0	; $029
+j:	.word	0	;i + 1
+temp:	.word	0
+min:	.word	0
+currCompare:	.word	0
+swapMin:	.word	0	;
+	.equ	@,$100
+arraySize:	.word	N
+array:	.word	100	; $101
+	.word	74
+	.word	-144
+	.word	10022
+	.word	657
+	.word	-33
+	.end

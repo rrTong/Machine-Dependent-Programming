@@ -1,0 +1,53 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ;	.EQU	@,$100
+  2.  000 002029  	lda	n
+  3.  001 200000  if:	cma#	$000
+  4.  002 4A2004  	jlt	if2
+  5.  003 40201C  	jmp	loop3
+  6.  004 002028  if2:	lda	m
+  7.  005 200000  	cma#	$000
+  8.  006 4A2008  	jlt	loop
+  9.  007 402012  	jmp	loop2
+ 10.  008 002027  loop:	lda	counter
+ 11.  009 202029  	cma	n
+ 12.  00A 4A2026  	jlt	end
+ 13.  00B 00202A  	lda	p
+ 14.  00C 142028  	sba	m
+ 15.  00D 04202A  	sta	p
+ 16.  00E 002027  	lda	counter
+ 17.  00F 140001  	sba#	$001
+ 18.  010 042027  	sta	counter
+ 19.  011 402008  	jmp	loop
+ 20.  012 002027  loop2:	lda	counter
+ 21.  013 202029  	cma	n
+ 22.  014 4A2026  	jlt	end
+ 23.  015 00202A  	lda	p
+ 24.  016 102028  	ada	m
+ 25.  017 04202A  	sta	p
+ 26.  018 002027  	lda	counter
+ 27.  019 140001  	sba#	$001
+ 28.  01A 042027  	sta	counter
+ 29.  01B 402012  	jmp	loop2
+ 30.  01C 002027  loop3:	lda	counter
+ 31.  01D 202029  	cma	n
+ 32.  01E 4D2026  	jgt	end
+ 33.  01F 00202A  	lda	p
+ 34.  020 102028  	ada	m
+ 35.  021 04202A  	sta	p
+ 36.  022 002027  	lda	counter
+ 37.  023 100001  	ada#	$001
+ 38.  024 042027  	sta	counter
+ 39.  025 40201C  	jmp	loop3 
+ 40.  026 FFFFFF  end:	hlt
+ 41.  027 000001  counter:	.WORD $001
+ 42.  028 000003  m:	.WORD $003 ; $028
+ 43.  029 000002  n:	.WORD $002 ; $029
+ 44.  02A 000000  p:	.WORD $000 ; $02A
+ 45.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000027 = COUNTER         000026 = END             000001 = IF              
+000004 = IF2             000008 = LOOP            000012 = LOOP2           
+00001C = LOOP3           000028 = M               000029 = N               
+00002A = P               

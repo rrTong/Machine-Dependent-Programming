@@ -1,0 +1,68 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ; main
+  2.              	.equ	@, $000
+  3.              	.equ	row, 3
+  4.              	.equ	col, 2
+  5.              	.equ	size, row*col
+  6.              	.equ	stack, $300
+  7.              
+  8.  000 020300  	lds#	stack		;sp decreases when you psh, sp inc when you pop
+  9.  001 030000  	ldf#	0
+ 10.              
+ 11.  002 082100  	psh	givenArray		; make room for stack
+ 12.  003 080003  	psh#	row
+ 13.  004 080002  	psh#	col
+ 14.  005 082106  	psh	resultArray
+ 15.              
+ 16.  006 41210F  	jsr	outerLoop
+ 17.              
+ 18.  007 120004  	ads#	4		; 4 parameters in stack, clearing
+ 19.              
+ 20.  008 FFFFFF  	hlt
+ 21.              
+ 22.              	.equ	@, $100
+ 23.  100 000001  givenArray:	.word	1		
+ 24.  101 000002  	.word	2		
+ 25.  102 000003  	.word	3		
+ 26.  103 000004  	.word	4
+ 27.  104 000005  	.word	5
+ 28.  105 000006  	.word	6
+ 29.              
+ 30.  106 000000  resultArray:	.blkw size, 0		; $106 - $10B
+ 31.              
+ 32.  10C 000000  givenIndex:	.word	0
+ 33.  10D 000000  resultIndex:	.word	0
+ 34.  10E 000000  timesLooped:	.word	0
+ 35.              
+ 36.  10F 00210E  outerLoop:	lda	timesLooped		; move position of index to count next col
+ 37.  110 200001  	cma#	col-1
+ 38.  111 4D2120  	jgt	exit
+ 39.              
+ 40.  112 01210E  	ldx	timesLooped
+ 41.  113 04210C  	sta	givenIndex
+ 42.              
+ 43.  114 01210C  innerLoop:	ldx	givenIndex		
+ 44.  115 004100  	lda+	givenArray		; loads position of given array
+ 45.  116 01210D  	ldx	resultIndex
+ 46.  117 044106  	sta+	resultArray		; moves values of given array into new array
+ 47.              
+ 48.  118 001002  	lda# !	2		; puts row-major value into stack
+ 49.  119 10210C  	ada	givenIndex		
+ 50.  11A 04210C  	sta	givenIndex		; moves through given array
+ 51.              	
+ 52.  11B 1B210D  	inc	resultIndex		; points to the right position in new array
+ 53.              
+ 54.  11C 200006  	cma#	size		; if column is transferred, move to next col		
+ 55.  11D 4A2114  	jlt	innerLoop		; otherwise stay in innerLoop
+ 56.              
+ 57.  11E 1B210E  	inc	timesLooped		; track how many times outerLoop has looped
+ 58.  11F 40210F  	jmp	outerLoop
+ 59.              	
+ 60.  120 FFF040  exit:	rtn
+
+                     SYMBOL TABLE CONTENTS
+
+000002 = COL             000120 = EXIT            000100 = GIVENARRAY      
+00010C = GIVENINDEX      000114 = INNERLOOP       00010F = OUTERLOOP       
+000106 = RESULTARRAY     00010D = RESULTINDEX     000003 = ROW             
+000006 = SIZE            000300 = STACK           00010E = TIMESLOOPED     

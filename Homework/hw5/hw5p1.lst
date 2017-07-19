@@ -1,0 +1,68 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@, $000
+  2.              
+  3.              	.equ	size, 27
+  4.              
+  5.  000 082100  	psh	$100
+  6.  001 08201B  	psh	size
+  7.  002 082109  	psh	$109
+  8.              
+  9.  003 412020  	jsr	subroutine
+ 10.              
+ 11.  004 120003  	ads#	3
+ 12.              
+ 13.  005 FFFFFF  	hlt
+ 14.              
+ 15.              	.equ	@, $020
+ 16.  020 FFF012  subroutine:	pshf
+ 17.  021 FFF008  	tsf
+ 18.  022 010000  	ldx#	0
+ 19.              
+ 20.  023 502100  loop:	ldc	string		; loads string
+ 21.              
+ 22.  024 200041  	cma#	'A'		; checks if upperCase
+ 23.  025 4A2030  	jlt	next
+ 24.  026 20005A  	cma#	'Z'		
+ 25.  027 4C202F  	jle	upperCase
+ 26.              
+ 27.  028 200061  	cma#	'a'		; checks if lowerCase
+ 28.  029 4A2030  	jlt	next
+ 29.  02A 20007A  	cma#	'z'		; if it's greater than z, not a letter
+ 30.  02B 4A202D  	jlt	lowerCase
+ 31.              
+ 32.  02C 402030  	jmp	next
+ 33.              
+ 34.  02D 140020  lowerCase:	sba#	$20		; lowerCase ==> upperCase
+ 35.  02E 402030  	jmp	next
+ 36.              
+ 37.  02F 100020  upperCase:	ada#	$20		; upperCase ==> lowerCase
+ 38.              
+ 39.  030 512109  next:	stc	newString
+ 40.  031 60001B  	aoc#	size		; moves to next character
+ 41.  032 4A2023  	jlt	loop
+ 42.              	
+ 43.  033 FFF015  	popf
+ 44.  034 FFF040  	rtn
+ 45.              
+ 46.              	
+ 47.              
+ 48.              
+ 49.              	.equ	@, $100
+ 50.  100 6C4541  string:	.word	$6C4541
+ 51.  101 724E20  	.word	$724E20
+ 52.  102 705974  	.word	$705974
+ 53.  103 484F6E  	.word	$484F6E
+ 54.  104 20694E  	.word	$20694E
+ 55.  105 203330  	.word	$203330
+ 56.  106 205965  	.word	$205965
+ 57.  107 615253  	.word	$615253
+ 58.  108 212020  	.word	$212020
+ 59.              
+ 60.  109 FFFFFFFFFFFFFFFF  newString:	.blkw 9		; newString starts on $109
+ 61.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000023 = LOOP            00002D = LOWERCASE       000109 = NEWSTRING       
+000030 = NEXT            00001B = SIZE            000100 = STRING          
+000020 = SUBROUTINE      00002F = UPPERCASE       

@@ -1,0 +1,61 @@
+	.equ	@, $000
+
+	.equ	size, 27
+
+	psh	$100
+	psh	size
+	psh	$109
+
+	jsr	subroutine
+
+	ads#	3
+
+	hlt
+
+	.equ	@, $020
+subroutine:	pshf
+	tsf
+	ldx#	0
+
+loop:	ldc	string		; loads string
+
+	cma#	'A'		; checks if upperCase
+	jlt	next
+	cma#	'Z'		
+	jle	upperCase
+
+	cma#	'a'		; checks if lowerCase
+	jlt	next
+	cma#	'z'		; if it's greater than z, not a letter
+	jlt	lowerCase
+
+	jmp	next
+
+lowerCase:	sba#	$20		; lowerCase ==> upperCase
+	jmp	next
+
+upperCase:	ada#	$20		; upperCase ==> lowerCase
+
+next:	stc	newString
+	aoc#	size		; moves to next character
+	jlt	loop
+	
+	popf
+	rtn
+
+	
+
+
+	.equ	@, $100
+string:	.word	$6C4541
+	.word	$724E20
+	.word	$705974
+	.word	$484F6E
+	.word	$20694E
+	.word	$203330
+	.word	$205965
+	.word	$615253
+	.word	$212020
+
+newString:	.blkw 9		; newString starts on $109
+	.end
