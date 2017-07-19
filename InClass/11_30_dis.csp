@@ -1,0 +1,130 @@
+
+	.equ	tim_ctrl,	$030
+	.equ	tim_stat,	$030
+	.equ	tim_value,	$031
+	.equ	tim_count,	$034
+
+	.equ	interrupt_ena,		$80
+	.equ	reset_ready_bit,		$40
+	.equ	start_after_load,		$10
+	.equ	enable_reset_and_start,	$D0
+	.equ	enable_and_reset,		$C0
+
+	.equ	crt_vbuf, $100
+	.equ	crt_cntl, $316		; location where you would clear screen
+	.equ	clear_screen, $01
+	.equ	crt_length, 14
+	.equ	crt_width, 38
+	.equ	rows, 3
+	.equ	cols, 4
+
+main:	
+	LDA#	0
+	STA	time
+
+	lda	reload		; change reload value to get 10s
+	outw	TIM_VALUE
+
+	lda#	imerisr
+	sta	$FFB
+	LDA#	ENABLE_RESET_AND_START
+	OUTB	TIM_CNTL
+
+	lda#	keyboardisr
+	sta	$FF8
+
+	SIE
+
+mainloop:	NOP			; no operation, going to loop here forever
+	jmp	mainloop		; should put a keyboard interrupt to hlt
+
+reload:	.word	$002000
+
+;f( int* N, int rows, int cols, char c)
+	.equ	pI, 0
+	.equ	pJ, 1
+	.equ	pH, 7
+	.equ	prows, 6
+	.equ	pools, 5
+	.equ	ph, 4
+update:	pshf
+	sbs#	2
+	tsf
+	clr	!pI
+iloop:	ldx	!pI
+	
+paint:	pshf
+	sbs#	3
+	tsf
+	lda	!px
+	mul#	CRT_WIDTH
+	ada	!py
+	sta	!port
+	clr	!pI
+iloopg:	ldx	!pI
+	cmx	!pr
+	jge	paint_done
+	clr	!pJ
+jloopg:	ldx	!pJ
+	cmx	!pc
+	jge	jdoneg
+	lda	!pI
+	mul	!pc
+	ada	!pJ
+	tax
+	lda&	!pA
+	ldx	!port
+	outb+	crt_vbuf
+	inc	!port
+	inc	!pJ
+	jmp	jloopg
+jdoneg:	inc	!pI
+	lda	!pcrt
+	ada#	CRT_WIDTH
+
+paint_done:	popf
+	ads#	3
+	rtn
+
+TimerTSR:	psha		;line 125 in his code
+	
+	lda	time
+	cma#	10
+	jge	updategrid
+	inc	time
+	jmp	timedone
+updategrid:	clr	time
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	inc	ch
+	psh	ch
+	jsr	update
+	ads#	4
+
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	psh#	4
+	psh#	4
+	jsr	Paint
+	ads#	5
+timedone:	lda#	ENABLE_AND_RESET		; control timer by setting the bits
+	outb	TIM_CNTL
+	popa
+	irtn
+
+keyboardisr:	
+
+
+	.equ	@, $100
+A:	.blkw	rows*cols
+B:	.blkw	rows*colws
+curGridf:	.word	0
+ch:	.word	'B'
+
+time:	.word
+
+I:	.word
+J:	.word
+

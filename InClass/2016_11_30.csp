@@ -1,0 +1,219 @@
+
+	.EQU KBD_CNTL,  	$000
+          	.EQU KBD_STAT,  	$000
+          	.EQU KBD_DATA,  	$001
+          	.EQU KBD_FLUSH, 	$40
+
+          	.EQU TIM_CNTL,      	$030
+          	.EQU TIM_STAT,      	$030
+          	.EQU TIM_VALUE,     	$031
+          	.EQU TIM_COUNT,     	$034
+         
+          	.EQU INTERRUPT_ENA,           $80
+          	.EQU RESET_READY_BIT,         $40
+          	.EQU START_AFTER_LOAD,        $10
+          	.EQU ENABLE_RESET_AND_START,  $D0
+          	.EQU ENABLE_AND_RESET,        $C0
+
+	.EQU	CRT_Xstart, 4
+	.EQU	CRT_Ystart, 4
+
+	.EQU DELAY, 10
+
+	.equ	CRT_VBUF, $100
+	.equ	CRT_CNTL, $316
+	.equ	CLEAR_SCREEN, $01
+	.equ	CRT_LENGTH, 14
+	.equ	CRT_WIDTH, 38
+
+	.equ	ROWS, 5
+	.equ	COLS, 10
+
+main:	
+	lds#	$e00
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	inc	ch
+	psh	ch
+	jsr	Update
+	ads#	4
+
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	psh#	CRT_Xstart
+	psh#	CRT_Ystart
+	jsr	Paint
+	ads#	5
+	
+
+
+	LDA#	0
+	STA	time	
+
+	lda	reload
+	outw	TIM_VALUE
+
+	lda#	keybdisr
+	sta	$FF8
+	lda#	INTERRUPT_ENA
+	outb	KBD_CNTL
+
+
+	lda#	timerisr
+	sta	$FFB
+	LDA#	ENABLE_RESET_AND_START
+	OUTB	TIM_CNTL	
+
+
+	SIE
+mainloop:	NOP
+	jmp	mainloop
+
+reload:	.WORD	$08000
+
+;f( int* M, int rows, int cols, char c)
+	.equ	pI, 0
+	.equ	pJ, 1
+	.equ	pM, 7
+	.equ	prows, 6
+	.equ	pcols, 5
+	.equ	ph, 4
+Update:	pshf
+	sbs#	2
+	tsf
+	clr	!pI
+iloop:	ldx	!pI
+	cmx	!prows
+	jge	update_done
+	clr	!pJ
+jloop:	ldx	!pJ
+	cmx	!pcols
+	jge	jdone
+	lda	!pI
+	mul	!pcols
+	ada	!pJ
+	tax
+	lda	!ph
+	sta&	!pM
+	inc	!pJ
+	jmp	jloop
+jdone:	inc	!pI
+	jmp	iloop
+update_done:	popf
+	ads#	2
+	rtn
+
+
+.equ @, $200
+;g( int* A, int rows, int cols, int x, int y)
+;	.equ	pI, 0
+;	.equ	pJ, 1
+	.equ	pcrt, 2
+	.equ	pA, 9
+	.equ	pr, 8
+	.equ	pc, 7
+	.equ	px, 6
+	.equ	py, 5
+Paint:	pshf
+	sbs#	3
+	tsf
+	lda	!px
+	mul#	CRT_WIDTH
+	ada	!py
+	sta	!pcrt
+	clr	!pI
+iloopg:	ldx	!pI
+	cmx	!pr
+	jge	paint_done
+	clr	!pJ
+jloopg:	ldx	!pJ
+	cmx	!pc
+	jge	jdoneg
+	lda	!pI
+	mul	!pc
+	ada	!pJ
+	tax
+	lda&	!pA	; acc= M[i,j]
+	ldx	!pcrt
+	outb+	CRT_VBUF
+	inc	!pcrt	; pcrt++
+	inc	!pJ	; J++
+	jmp	jloopg
+jdoneg:	inc	!pI
+	lda	!pcrt
+	ada#	CRT_WIDTH
+	sba	!pc	
+	sta	!pcrt	; pcrt = pcrt + width - (rows -1) 	
+	jmp	iloopg	
+paint_done:	popf
+	ads#	3
+	rtn
+
+TimerISR:	psha
+	lda	time
+	cma#	DELAY
+	jge	updategrid
+	inc	time
+	jmp	timedone
+updategrid:	clr	time
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	inc	ch
+	psh	ch
+	jsr	Update
+	ads#	4
+
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	psh#	CRT_Xstart
+	psh#	CRT_Ystart
+	jsr	Paint
+	ads#	5
+timedone:	lda#	ENABLE_AND_RESET;
+	outb	TIM_CNTL	
+	popa
+	irtn
+
+keybdisr:	psha
+	lda#	KBD_FLUSH
+	outb	KBD_CNTL
+	clr	time
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	inc	ch
+	psh	ch
+	jsr	Update
+	ads#	4
+
+	psh#	A
+	psh#	ROWS
+	psh#	COLS
+	psh#	CRT_Xstart
+	psh#	CRT_Ystart
+	jsr	Paint
+	ads#	5
+	LDA#	INTERRUPT_ENA 	;
+	OUTB	KBD_CNTL	;
+	popa
+	irtn
+	
+
+
+.equ @, $100
+A:	.BLKW	ROWS*COLS
+B:	.BLKW	ROWS*COLS
+curGridf:	.WORD	0	
+ch:	.WORD	'A'
+
+time:	.WORD
+
+I:	.WORD
+J:	.WORD
+temp:	.WORD
+
+	

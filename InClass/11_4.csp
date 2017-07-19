@@ -1,0 +1,50 @@
+	.equ	@, $000
+	.equ	stack, $060
+	.equ	vecsize, 5
+	lds#	stack
+	ldf#	0
+
+	psh#	vector1		; push addr of first actual parameter
+	psh#	vector2		; push addr of second actual parameter
+	psh#	vector3		; push addr of third actual parameter
+	psh#	vecsize		; push the size of the arrays (vectors)
+
+	jsr	addarrays		; call subroutine
+	ada#	4		; take actual parameters off stack
+	hlt
+; arrays go here
+	.equ	@, $020
+vector1:	.word	1
+	.word	2
+	.word	3
+	.word	4
+	.word	5
+vector2:	.word	1
+	.word	2
+	.word	3
+	.word	4
+	.word	5
+vector3:	.blkw	5
+; addarrays subroutine
+	.equ	@, $040	
+	.equ	v1, 5	; first formal parameter
+	.equ	v2, 4	; second formal parameter
+	.equ	v3, 3	; third formal parameter
+	.equ	size, 2	; fourth formal parameter
+
+addarrays:	pshf		; save previous frame pointer
+	tsf		; stack ptr becomes new frame ptr
+	ldx#	0	; initialize index register to 0
+
+loop:	cmx !	size	; compare xr to num of items in array
+	jge	end	; if xr >= array size then end
+	lda& !	v1	; load to acc indirect from array v1 at xr
+	ada& !	v2	; mult acc indirect by array v2 at xr
+	sta& !	v3	; store acc indirect to array v3 at xr
+	adx#	1	; increment index register
+	jmp	loop	; go to top of loop
+
+end:	popf		; pop stack to fp (restore previous fp)
+	rtn		; return to caller - this pops return
+
+	.end	

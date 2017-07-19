@@ -1,0 +1,36 @@
+; main program
+	.equ	@, $000
+	.equ	stack, $060
+	lds#	stack
+	ldf#	0
+	
+	psh	n
+	jsr	factor	; jump to subroutine
+	ads#	1	; have one parameter on stack, gotta clear it
+	sta	result
+	hlt
+n:	.word	
+result:	.word	-1
+
+; factorial function
+	.equ	@, $020
+	.equ	num, 2
+
+factor:	pshf
+	tsf
+
+	lda !	num	; gotta put ! to say "use the frame pointer"
+	cma#	0
+	jeq	end
+	sba#	1
+	psha
+	jsr	factor
+	mul !	num
+	ads#	1
+	popf		; pop frame pointer
+	rtn
+end:	lda#	1
+	popf
+	rtn
+	
+	.end

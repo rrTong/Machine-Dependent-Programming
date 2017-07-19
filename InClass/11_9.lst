@@ -1,0 +1,30 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@, $000
+  2.  000 010000  	ldx#	0
+  3.  001 21000B  loop:	cmx#	strlen
+  4.  002 4B2007  	jge	end	
+  5.  003 502010  	ldc	str1
+  6.  004 512020  	stc	str2
+  7.  005 110001  	adx#	1
+  8.  006 402001  	jmp	loop
+  9.  007 FFFFFF  end:	hlt			; when string length too long
+ 10.              
+ 11.              
+ 12.              
+ 13.              
+ 14.              
+ 15.              
+ 16.              
+ 17.              	.equ	@, $010
+ 18.  010 68656C  str1:	.char	'hello world', strlen
+      011 6C6F20
+      012 776F72
+      013 6C6420
+ 19.              
+ 20.              	.equ	@, $020
+ 21.  020 000000  str2:	.blkw	5, 0		; 5 words because helloworld only takes up 4
+
+                     SYMBOL TABLE CONTENTS
+
+000007 = END             000001 = LOOP            000010 = STR1            
+000020 = STR2            00000B = STRLEN          

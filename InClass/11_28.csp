@@ -1,0 +1,29 @@
+; nov28.csp
+; interrupts
+	.equ	stackstart, $030
+	.equ	enable_ints, $80
+	.equ	kbd_ctrl, $000
+	.equ	kbd_data, $001
+	.equ	crt_data, $317
+	.equ	ex_point, $21
+
+	lds#	stackstart
+	lda#	enable_ints
+	outb	kbd_ctrl
+	
+	sie	
+
+loop:	nop			; most of hw7 goes in here
+	nop
+	nop
+	jmp	loop
+
+kbd_int:	psha
+	inb	kbd_data		; clear keyboard buffer, grab char out of it
+	lda#	ex_point
+	outb	crt_data
+	popa
+	irtn
+
+.equ	@, $FF8
+	.word	kbd_int

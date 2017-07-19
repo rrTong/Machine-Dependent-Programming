@@ -1,0 +1,36 @@
+; timer.csp
+	.equ	crt_data, $317
+	.equ	tim_ctrl, $030		
+	.equ	tim_stat, $030
+	.equ	tim_valu, $031
+	.equ	bell, $07		; plays a bell, if you want 7 could make this #37 to print 7s
+	.equ	reset_ready_bit, $40	; if its a 1, then timer is counted to 0
+				; if its not a 1, timer is still counting
+	.equ	start_after_load, $10
+	.equ	put_str, $E05
+
+main:	lda	reload
+	outw	tim_valu
+	lda#	reset_ready_bit + start_after_load
+	outb	tim_ctrl
+
+loop:	inb	tim_stat		; whats the timer status register
+	jge	loop		; have i counted down to 0 yet
+				; if my leftmost bit is a 0, loop doesn't end
+				; if my leftmost bit is a 1, i have counted down to 0 or beyond
+	lda#	reset_ready_bit		; reset the timer
+	outb	tim_ctrl		
+	lda#	bell
+	outb	crt_data		; output to screen
+	
+	psh#	msg1_len		; theres a msg that i wanna print with a ding
+	psh#	msg1		; youre gonna want to print a grid tho
+
+	jsr	put_str
+	ads#	2
+	jmp	loop
+
+reload:	.word	$002000
+msg1:	.char	'are you annoyed yet?\cr\lf',msg1_len
+
+;.equ put_nl, $e06

@@ -1,0 +1,92 @@
+	.equ	nrows, 3
+	.equ	ncols,		;missing value here
+
+main:	; didnt copy this
+
+;	if temp > 10
+;		newgrid = 10
+;	else
+;		newgrid = temp
+
+	.equ	temp, 0
+	.equ	I, 1
+	.equ	J, 2
+	.equ	pnewgrid, 5
+	.equ	pools, 6
+	.equ	prows, 7
+	.equ 	pcurgrid
+average:	pshf
+	sbs#	3
+	tsf
+	clr	!I
+	clr	!J
+iloop:	lda	!I
+	cma	!prows
+	jge	done
+	clr	!J
+jloop:	lda	!J
+	cma	!pools
+	jge	jend
+	clr	!temp	; temp = 0
+topbottom:	ldx	!I
+	cmx#	0
+	jeq	top	; top row?
+	lda	!I	; (i-1, j)
+	sba#	1
+	mul	!pools
+	ada	!J
+	tax
+	lda&	!pourgrid
+	sta	!temp
+top:	ldx	!I
+	adx#	1
+	cmx	!prows
+	jeq	leftright
+	lda	!I
+	ada#	1
+	mul	!pools
+	ada	!J
+	tax
+	lda	!temp
+	ada&	!pcurgrid
+	sta	!temp
+leftright:	ldx	!J
+	cmx#	0
+	jeq	left	; leftmost col?
+	lda	!I	; (i, j-1)
+	mul	!pools
+	ada	!J
+	sba#	1
+	tax
+	lda	!temp
+	ada&	!pcurgrid
+left:	ldx	!J
+	adx#	1
+	cmx	!goals
+	jeq	action	; last col?
+	lda	!I	; (i, j+1)
+	mul	!pools
+	ada	!J
+	ada#	1
+	tax
+	lda	!temp
+	ada&	!pcurgrid
+	sta	!temp
+action:	lda	!temp
+	cma#	10
+	jle	updateij
+	lda#	10
+	sta	!temp
+updateij:	lda	!I
+	mul	!pools
+	ada	!J
+	tax
+	lda	!temp
+	sta&	!pnewgrid
+	inc	!J
+	jmp	jloop
+jend:	inc	!I
+	jmp	iloop
+done:	ads#	3
+
+;... didnt copy this

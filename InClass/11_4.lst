@@ -1,0 +1,58 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              	.equ	@, $000
+  2.              	.equ	stack, $060
+  3.              	.equ	vecsize, 5
+  4.  000 020060  	lds#	stack
+  5.  001 030000  	ldf#	0
+  6.              
+  7.  002 080020  	psh#	vector1		; push addr of first actual parameter
+  8.  003 080025  	psh#	vector2		; push addr of second actual parameter
+  9.  004 08002A  	psh#	vector3		; push addr of third actual parameter
+ 10.  005 080005  	psh#	vecsize		; push the size of the arrays (vectors)
+ 11.              
+ 12.  006 412040  	jsr	addarrays		; call subroutine
+ 13.  007 100004  	ada#	4		; take actual parameters off stack
+ 14.  008 FFFFFF  	hlt
+ 15.              ; arrays go here
+ 16.              	.equ	@, $020
+ 17.  020 000001  vector1:	.word	1
+ 18.  021 000002  	.word	2
+ 19.  022 000003  	.word	3
+ 20.  023 000004  	.word	4
+ 21.  024 000005  	.word	5
+ 22.  025 000001  vector2:	.word	1
+ 23.  026 000002  	.word	2
+ 24.  027 000003  	.word	3
+ 25.  028 000004  	.word	4
+ 26.  029 000005  	.word	5
+ 27.  02A FFFFFFFFFFFFFFFF  vector3:	.blkw	5
+ 28.              ; addarrays subroutine
+ 29.              	.equ	@, $040	
+ 30.              	.equ	v1, 5	; first formal parameter
+ 31.              	.equ	v2, 4	; second formal parameter
+ 32.              	.equ	v3, 3	; third formal parameter
+ 33.              	.equ	size, 2	; fourth formal parameter
+ 34.              
+ 35.  040 FFF012  addarrays:	pshf		; save previous frame pointer
+ 36.  041 FFF008  	tsf		; stack ptr becomes new frame ptr
+ 37.  042 010000  	ldx#	0	; initialize index register to 0
+ 38.              
+ 39.  043 213002  loop:	cmx !	size	; compare xr to num of items in array
+ 40.  044 4B204A  	jge	end	; if xr >= array size then end
+ 41.  045 009005  	lda& !	v1	; load to acc indirect from array v1 at xr
+ 42.  046 109004  	ada& !	v2	; mult acc indirect by array v2 at xr
+ 43.  047 049003  	sta& !	v3	; store acc indirect to array v3 at xr
+ 44.  048 110001  	adx#	1	; increment index register
+ 45.  049 402043  	jmp	loop	; go to top of loop
+ 46.              
+ 47.  04A FFF015  end:	popf		; pop stack to fp (restore previous fp)
+ 48.  04B FFF040  	rtn		; return to caller - this pops return
+ 49.              
+ 50.              	.end	
+
+                     SYMBOL TABLE CONTENTS
+
+000040 = ADDARRAYS       00004A = END             000043 = LOOP            
+000002 = SIZE            000060 = STACK           000005 = V1              
+000004 = V2              000003 = V3              000005 = VECSIZE         
+000020 = VECTOR1         000025 = VECTOR2         00002A = VECTOR3         

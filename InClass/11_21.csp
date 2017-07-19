@@ -1,0 +1,11 @@
+
+	.equ	kbd_stat, $000
+	.equ	kbd_data, $001
+	.equ	crt_data, $317
+
+poll:	inb	kbd_stat	; this entire part : reading stuff from keyboard
+	jge	poll
+	inb	kbd_data	; now we're gonna read what it said
+	outb	crt_data	; print what's typed
+	jmp	poll	; 
+	.end

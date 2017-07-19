@@ -1,0 +1,11 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              
+  2.              	.equ	@, $010
+  3.  010 68656C  str1:	.char	'hello world', strlen
+      011 6C6F20
+      012 776F72
+      013 6C6420
+
+                     SYMBOL TABLE CONTENTS
+
+000010 = STR1            00000B = STRLEN          

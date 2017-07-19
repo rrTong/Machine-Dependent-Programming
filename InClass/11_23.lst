@@ -1,0 +1,63 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ; timer.csp
+  2.              	.equ	crt_data, $317
+  3.              	.equ	tim_ctrl, $030		
+  4.              	.equ	tim_stat, $030
+  5.              	.equ	tim_valu, $031
+  6.              	.equ	bell, $07		; plays a bell, if you want 7 could make this #37 to print 7s
+  7.              	.equ	reset_ready_bit, $40	; if its a 1, then timer is counted to 0
+  8.              				; if its not a 1, timer is still counting
+  9.              	.equ	start_after_load, $10
+ 10.              	.equ	put_str, $E05
+ 11.              
+ 12.  000 00200F  main:	lda	reload
+ 13.  001 732031  	outw	tim_valu
+ 14.  002 000050  	lda#	reset_ready_bit + start_after_load
+ 15.  003 712030  	outb	tim_ctrl
+ 16.              
+ 17.  004 702030  loop:	inb	tim_stat		; whats the timer status register
+ 18.  005 4B2004  	jge	loop		; have i counted down to 0 yet
+ 19.              				; if my leftmost bit is a 0, loop doesn't end
+ 20.              				; if my leftmost bit is a 1, i have counted down to 0 or beyond
+ 21.  006 000040  	lda#	reset_ready_bit		; reset the timer
+ 22.  007 712030  	outb	tim_ctrl		
+ 23.  008 000007  	lda#	bell
+ 24.  009 712317  	outb	crt_data		; output to screen
+ 25.              	
+ 26.  00A 080033  	psh#	msg1_len		; theres a msg that i wanna print with a ding
+ 27.  00B 080010  	psh#	msg1		; youre gonna want to print a grid tho
+ 28.              
+ 29.  00C 412E05  	jsr	put_str
+ 30.  00D 120002  	ads#	2
+ 31.  00E 402004  	jmp	loop
+ 32.              
+ 33.  00F 002000  reload:	.word	$002000
+ 34.  010 486F77  msg1:	.char	'How many new generations would you like to print?\cr\lf',msg1_len
+      011 206D61
+      012 6E7920
+      013 6E6577
+      014 206765
+      015 6E6572
+      016 617469
+      017 6F6E73
+      018 20776F
+      019 756C64
+      01A 20796F
+      01B 75206C
+      01C 696B65
+      01D 20746F
+      01E 207072
+      01F 696E74
+      020 3F0D0A
+      021 FFFFFFFFFFFFFFFF
+      022 FFFFFFFFFFFFFFFF
+ 35.              
+ 36.              ;.equ put_nl, $e06
+
+                     SYMBOL TABLE CONTENTS
+
+000007 = BELL            000317 = CRT_DATA        000004 = LOOP            
+000000 = MAIN            000010 = MSG1            000033 = MSG1_LEN        
+000E05 = PUT_STR         00000F = RELOAD          000040 = RESET_READY_BIT 
+000010 = START_AFTER_LOAD000030 = TIM_CTRL        000030 = TIM_STAT        
+000031 = TIM_VALU        

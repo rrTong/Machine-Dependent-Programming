@@ -1,0 +1,35 @@
+; what this does : take a string of characters to show up on the screen
+; calling program
+	.equ	@, $000
+	lds#	$100	; like all programs, declare where stack and fp start
+	ldf#	0
+	psh#	prompt_len	; length of the string
+	psh#	prompt	; the address, starting char of string
+	jsr	put_str
+	ads#	2
+	hlt
+
+prompt:	.char	'how many generations? ', prompt_len		
+; this is the string i wanna store in memory
+
+	.equ	@, $020
+	.equ	chars, 3
+	.equ	string, 2
+	.equ	crt_data, $317	; give a name to the crt I/O port
+			; $317 not memory addr, it's a I/O port
+put_str:	pshf
+	tsf
+; we want to be able to restore what was in the register when we return 
+	psha		; psh ACCC on stack
+	pshx		; psh XR
+			; not going to use values, just setting them aside
+	ldx#	0	; index register tells us what char we're using next
+p_loop:	ldc* !	string
+	outb	crt_data
+	aoc !	chars
+	jlt	p_loop
+	
+	popx
+	popa
+	popf
+	rtn

@@ -1,0 +1,42 @@
+; main program
+	.equ	@, $000
+	.equ	stack, $040
+	lds#	stack
+	ldf#	0
+
+	psh	main_base
+	psh	main_exp
+	jsr	power
+	ads#	2
+	sta	answer
+	hlt
+main_base:	.word	3
+main_exp:	.word	4
+answer:	.word
+
+; power function
+	.equ	@, $020
+	.equ	base, 3
+	.equ	exp, 2
+
+power:	pshf
+	tsf
+
+	lda#	1
+	sta	result
+loop:	lda !	exp	; load exp variable by variable on stack instead of 
+			; loading it from a variable
+	cma#	0
+	jle	end
+	lda	result
+	mul !	base	; same here, but with base, pulling it from stack
+	sta	result
+	dec !	exp	; decrement exponenent
+	jmp	loop
+
+end:	lda	result	; rather than hlting...
+	popf		; pop frame pointer, 
+	rtn		; whatever on top of stack, put it in fp
+; base:	.word	3
+; exp:	.word	4
+result:	.word	

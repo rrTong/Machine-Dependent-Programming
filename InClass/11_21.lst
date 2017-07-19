@@ -1,0 +1,17 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              
+  2.              	.equ	kbd_stat, $000
+  3.              	.equ	kbd_data, $001
+  4.              	.equ	crt_data, $317
+  5.              
+  6.  000 702000  poll:	inb	kbd_stat	; this entire part : reading stuff from keyboard
+  7.  001 4B2000  	jge	poll
+  8.  002 702001  	inb	kbd_data	; now we're gonna read what it said
+  9.  003 712317  	outb	crt_data
+ 10.  004 402000  	jmp	poll	; 
+ 11.              	.end
+
+                     SYMBOL TABLE CONTENTS
+
+000317 = CRT_DATA        000001 = KBD_DATA        000000 = KBD_STAT        
+000000 = POLL            

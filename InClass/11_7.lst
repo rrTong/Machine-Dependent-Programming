@@ -1,0 +1,43 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ; main program
+  2.              	.equ	@, $000
+  3.              	.equ	stack, $060
+  4.  000 020060  	lds#	stack
+  5.  001 030000  	ldf#	0
+  6.              	
+  7.  002 082007  	psh	n
+  8.  003 412020  	jsr	factor	; jump to subroutine
+  9.  004 120001  	ads#	1	; have one parameter on stack, gotta clear it
+ 10.  005 042008  	sta	result
+ 11.  006 FFFFFF  	hlt
+ 12.  007 000000  n:	.word	
+ 13.  008 FFFFFF  result:	.word	-1
+ 14.              
+ 15.              ; factorial function
+ 16.              	.equ	@, $020
+ 17.              	.equ	num, 2
+ 18.              
+ 19.  020 FFF012  factor:	pshf
+ 20.  021 FFF008  	tsf
+ 21.              
+ 22.  022 003002  	lda !	num	; gotta put ! to say "use the frame pointer"
+ 23.  023 200000  	cma#	0
+ 24.  024 48202C  	jeq	end
+ 25.  025 140001  	sba#	1
+ 26.  026 FFF010  	psha
+ 27.  027 412020  	jsr	factor
+ 28.  028 183002  	mul !	num
+ 29.  029 120001  	ads#	1
+ 30.  02A FFF015  	popf		; pop frame pointer
+ 31.  02B FFF040  	rtn
+ 32.  02C 000001  end:	lda#	1
+ 33.  02D FFF015  	popf
+ 34.  02E FFF040  	rtn
+ 35.              	
+ 36.              	.end
+ 37.              
+
+                     SYMBOL TABLE CONTENTS
+
+00002C = END             000020 = FACTOR          000007 = N               
+000002 = NUM             000008 = RESULT          000060 = STACK           

@@ -1,0 +1,21 @@
+	ldx#	1		; XR = 1
+	lda+	label+2		; ACC = $100
+	adx#	3		; XR = 4
+	ada+	label		; ACC = $100 + ($0FD + 4) = $201
+	sbx#	2		; XR = 2
+	sba	label+3		; ACC = $201 - $100 = $101
+	mul+	label+4		; ACC = $101 * $103
+	hlt
+	.equ	label, $0FD
+
+				; lda+ == addr + xr
+
+				; mul+ == acc * (addr + xr)
+				; ada+ == acc + (addr + xr)
+
+				; ada ! == acc + (addr + fp)
+
+				; ada+ ! == acc + ([addr + fp] + xr
+
+				; PSH == CBValue
+				; PSH# == CBAddr

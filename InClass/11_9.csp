@@ -1,0 +1,21 @@
+	.equ	@, $000
+	ldx#	0
+loop:	cmx#	strlen
+	jge	end	
+	ldc	str1
+	stc	str2
+	adx#	1
+	jmp	loop
+end:	hlt			; when string length too long
+
+
+
+
+
+
+
+	.equ	@, $010
+str1:	.char	'hello world', strlen
+
+	.equ	@, $020
+str2:	.blkw	5, 0		; 5 words because helloworld only takes up 4

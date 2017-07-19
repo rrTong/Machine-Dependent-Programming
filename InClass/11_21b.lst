@@ -1,0 +1,49 @@
+LINE ADDR CONTENTS SOURCE LINE
+  1.              ; what this does : take a string of characters to show up on the screen
+  2.              ; calling program
+  3.              	.equ	@, $000
+  4.  000 020100  	lds#	$100	; like all programs, declare where stack and fp start
+  5.  001 030000  	ldf#	0
+  6.  002 080016  	psh#	prompt_len	; length of the string
+  7.  003 080007  	psh#	prompt	; the address, starting char of string
+  8.  004 412020  	jsr	put_str
+  9.  005 120002  	ads#	2
+ 10.  006 FFFFFF  	hlt
+ 11.              
+ 12.  007 686F77  prompt:	.char	'how many generations? ', prompt_len		
+      008 206D61
+      009 6E7920
+      00A 67656E
+      00B 657261
+      00C 74696F
+      00D 6E733F
+      00E 202020
+ 13.              ; this is the string i wanna store in memory
+ 14.              
+ 15.              	.equ	@, $020
+ 16.              	.equ	chars, 3
+ 17.              	.equ	string, 2
+ 18.              	.equ	crt_data, $317	; give a name to the crt I/O port
+ 19.              
+ 20.  020 FFF012  put_str:	pshf
+ 21.  021 FFF008  	tsf
+ 22.              ; we want to be able to restore what was in the register when we return 
+ 23.  022 FFF010  	psha		; psh ACCC on stack
+ 24.  023 FFF011  	pshx		; psh XR
+ 25.              			; not going to use values, just setting them aside
+ 26.  024 010000  	ldx#	0	; index register tells us what char we're using next
+ 27.  025 507002  p_loop:	ldc* !	string
+ 28.  026 712317  	outb	crt_data
+ 29.  027 603003  	aoc !	chars
+ 30.  028 4A2025  	jlt	p_loop
+ 31.              	
+ 32.  029 FFF014  	popx
+ 33.  02A FFF013  	popa
+ 34.  02B FFF015  	popf
+ 35.  02C FFF040  	rtn
+
+                     SYMBOL TABLE CONTENTS
+
+000003 = CHARS           000317 = CRT_DATA        000007 = PROMPT          
+000016 = PROMPT_LEN      000020 = PUT_STR         000025 = P_LOOP          
+000002 = STRING          

@@ -1,0 +1,3 @@
+
+	.equ	@, $010
+str1:	.char	'hello world', strlen
